@@ -3,39 +3,25 @@
 
 import sys
 import json
-import struct
 import geobuf_pb2
 import collections
 
 
-def encode_coord(x): return int(x * 1e6)
-
-def add_point(line_string, x, y):
-    # TODO altitude
-    line_string.coords.append(encode_coord(x))
-    line_string.coords.append(encode_coord(y))
+def add_point(line_string, point):
+    for x in point: line_string.coords.append(int(x * 1e6))
 
 def populate_linestring(line_string, seq):
-    for i, point in enumerate(seq):
-        if i == 0:
-            add_point(line_string, point[0], point[1])
-        else:
-            add_point(line_string, point[0] - prev_x, point[1] - prev_y) # delta encoding
-        prev_x = point[0]
-        prev_y = point[1]
-
-def populate_multi_line_string(multi_line_string, line_strings_json):
-    for seq in line_strings_json:
-        populate_linestring(multi_line_string.line_strings.add(), seq)
-
+    prevPoint = None
+    for point in seq:
+        if prevPoint is None: add_point(line_string, point)
+        else: add_point(line_string, [a - b for a, b in zip(point, prevPoint)]) # delta encoding
+        prevPoint = point
 
 def encode_geometry(geometry, geometry_json):
 
     gt = geometry_json['type']
+
     Geometry = geobuf_pb2.Data.Geometry
-
-    coords_json = geometry_json.get('coordinates')
-
     geometry.type = {
         'Point': Geometry.POINT,
         'MultiPoint': Geometry.MULTIPOINT,
@@ -45,25 +31,30 @@ def encode_geometry(geometry, geometry_json):
         'MultiPolygon': Geometry.MULTIPOLYGON
     }[gt]
 
+    coords_json = geometry_json.get('coordinates')
+
     if gt == 'Point':
-        add_point(geometry.line_string, coords_json[0], coords_json[1])
+        add_point(geometry.line_string, coords_json)
 
     elif gt in ('MultiPoint', 'LineString'):
         populate_linestring(geometry.line_string, coords_json)
 
     elif gt in ('MultiLineString','Polygon'):
-        populate_multi_line_string(geometry.multi_line_string, coords_json)
+        line_strings = geometry.multi_line_string.line_strings
+        for seq in coords_json: populate_linestring(line_strings.add(), seq)
 
     elif gt in ('MultiPolygon'):
         for polygons in coords_json:
-            populate_multi_line_string(geometry.multi_polygon.polygons.add(), polygons)
+            poly = geometry.multi_polygon.polygons.add()
+            for seq in polygons: populate_linestring(poly.line_strings.add(), seq)
 
 
 def encode_feature(data, feature, feature_json):
 
     if 'id' in feature_json:
-        # TODO uint ids
-        feature.id = feature_json['id']
+        id = feature_json['id']
+        if isinstance(id, int) and id >= 0: feature.uint_id = idts
+        else: feature.id = id
 
     geometry_json = feature_json.get('geometry')
 
