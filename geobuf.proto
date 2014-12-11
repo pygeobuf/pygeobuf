@@ -1,0 +1,81 @@
+option optimize_for = LITE_RUNTIME;
+
+message Data {
+
+    message FeatureCollection {
+        repeated Feature features = 1;
+    }
+
+    message Feature {
+
+        oneof geometry_type {
+            Geometry geometry = 1;
+            GeometryCollection geometry_collection = 2;
+        }
+
+        repeated uint32 properties = 3 [packed = true];
+
+        oneof id_type {
+            string id = 4;
+            uint32 uint_id = 5;
+        }
+    }
+
+    message GeometryCollection {
+        repeated Geometry geometries = 1;
+    }
+
+    message Geometry {
+
+        enum Type {
+            POINT = 0;
+            MULTIPOINT = 1;
+            LINESTRING = 2;
+            MULTILINESTRING = 3;
+            POLYGON = 4;
+            MULTIPOLYGON = 5;
+        }
+
+        message LineString { // delta-encoded int coordinates
+            repeated sint32 coords = 1 [packed = true];
+        }
+        message MultiLineString {
+            repeated LineString line_strings = 1;
+        }
+        message MultiPolygon {
+            repeated MultiLineString polygons = 1;
+        }
+
+        required Type type = 1;
+
+        oneof coord_type {
+            LineString line_string = 2; // Point, MultiPoint, LineString
+            MultiLineString multi_line_string = 3; // Polygon, MultiLineString
+            MultiPolygon multi_polygon = 4; // MultiPolygon
+        }
+    }
+
+    message Value {
+        oneof value_type {
+            string string_value = 1;
+            float float_value = 2;
+            double double_value = 3;
+            sint32 int_value = 4;
+            uint32 uint_value = 5;
+            bool bool_value = 6;
+        }
+    }
+
+    oneof data_type {
+        FeatureCollection feature_collection = 1;
+        Feature feature = 2;
+        GeometryCollection geometry_collection = 3;
+        Geometry geometry = 4;
+    }
+
+    repeated string keys = 5;
+    repeated Value values = 6;
+
+    optional bool has_altitude = 7 [default = false];
+    optional uint32 precision = 8 [default = 6];
+}
