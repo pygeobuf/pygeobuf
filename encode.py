@@ -4,7 +4,8 @@
 import sys
 import json
 import struct
-import geobuf_pb2 as geobuf_pb2
+import geobuf_pb2
+import collections
 
 
 def encode_coord(x): return int(x * 1e6)
@@ -58,13 +59,9 @@ def encode_geometry(geometry, geometry_json):
             populate_multi_line_string(geometry.multi_polygon.polygons.add(), polygons)
 
 
-def encode_properties(feature, properties_json):
-    pass # TODO
+def encode_feature(data, feature, feature_json):
 
-
-def encode_feature(feature, feature_json):
-
-    if feature_json['id']:
+    if 'id' in feature_json:
         # TODO uint ids
         feature.id = feature_json['id']
 
@@ -76,7 +73,33 @@ def encode_feature(feature, feature_json):
     else:
         encode_geometry(feature.geometry, geometry_json)
 
-    encode_properties(feature, feature_json.get('properties'))
+
+    keys = collections.OrderedDict()
+    valueIndex = 0
+
+    for key, val in feature_json.get('properties').viewitems():
+        if not (key in keys):
+            keys[key] = True
+            data.keys.append(key)
+
+        feature.properties.append(keys.keys().index(key))
+        feature.properties.append(valueIndex)
+
+        valueIndex += 1
+
+        value = data.values.add()
+
+        if isinstance(val, unicode):
+            value.string_value = val
+
+        elif isinstance(val, float):
+            value.double_value = val
+
+        elif isinstance(val, int) or isinstance(val, long):
+            value.int_value = val
+
+        elif isinstance(val, bool):
+            value.bool_value = val
 
 
 def encode(obj):
@@ -86,10 +109,10 @@ def encode(obj):
 
     if data_type == 'FeatureCollection':
         for feature_json in obj.get('features'):
-            encode_feature(data.feature_collection.features.add(), feature_json)
+            encode_feature(data, data.feature_collection.features.add(), feature_json)
 
     elif data_type == 'Feature':
-        encode_feature(data.feature, obj)
+        encode_feature(data, data.feature, obj)
 
     elif data_type == 'GeometryCollection':
         for geometry_json in obj.get('geometries'):
@@ -100,12 +123,12 @@ def encode(obj):
     return data.SerializeToString();
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     filename = sys.argv[1]
     data = open(filename,'rb').read()
     json_object = json.loads(data)
 
     proto = encode(json_object)
 
-    print "%d bytes" % (len(proto))
+    print '%d bytes' % (len(proto))
     open(filename + '.pbf', 'wb').write(proto)
