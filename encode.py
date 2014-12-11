@@ -66,7 +66,6 @@ def encode_feature(data, feature, feature_json):
 
 
     keys = collections.OrderedDict()
-    valueIndex = 0
 
     for key, val in feature_json.get('properties').viewitems():
         if not (key in keys):
@@ -74,23 +73,13 @@ def encode_feature(data, feature, feature_json):
             data.keys.append(key)
 
         feature.properties.append(keys.keys().index(key))
-        feature.properties.append(valueIndex)
-
-        valueIndex += 1
+        feature.properties.append(len(data.values))
 
         value = data.values.add()
-
-        if isinstance(val, unicode):
-            value.string_value = val
-
-        elif isinstance(val, float):
-            value.double_value = val
-
-        elif isinstance(val, int) or isinstance(val, long):
-            value.int_value = val
-
-        elif isinstance(val, bool):
-            value.bool_value = val
+        if isinstance(val, unicode): value.string_value = val
+        elif isinstance(val, float): value.double_value = val
+        elif isinstance(val, int) or isinstance(val, long): value.int_value = val
+        elif isinstance(val, bool): value.bool_value = val
 
 
 def encode(obj):
@@ -108,8 +97,8 @@ def encode(obj):
     elif data_type == 'GeometryCollection':
         for geometry_json in obj.get('geometries'):
             encode_geometry(data.geometry_collection.geometries.add(), geometry_json)
-    else:
-        encode_geometry(data.geometry, obj)
+
+    else: encode_geometry(data.geometry, obj)
 
     return data.SerializeToString();
 
@@ -118,8 +107,8 @@ if __name__ == '__main__':
     filename = sys.argv[1]
     data = open(filename,'rb').read()
     json_object = json.loads(data)
-
     proto = encode(json_object)
 
-    print '%d bytes' % (len(proto))
+    print 'Encoded in %d bytes out of %d (%d%%)' % (len(proto), len(data), 100 * len(proto) / len(data))
+
     open(filename + '.pbf', 'wb').write(proto)
