@@ -49,6 +49,25 @@ def encode_geometry(geometry, geometry_json):
             for seq in polygons: populate_linestring(poly.line_strings.add(), seq)
 
 
+def encode_properties(data, properties, props_json):
+
+    keys = collections.OrderedDict()
+
+    for key, val in props_json.viewitems():
+        if not (key in keys):
+            keys[key] = True
+            data.keys.append(key)
+
+        properties.append(keys.keys().index(key))
+        properties.append(len(data.values))
+
+        value = data.values.add()
+        if isinstance(val, unicode): value.string_value = val
+        elif isinstance(val, float): value.double_value = val
+        elif isinstance(val, int) or isinstance(val, long): value.int_value = val
+        elif isinstance(val, bool): value.bool_value = val
+
+
 def encode_feature(data, feature, feature_json):
 
     if 'id' in feature_json:
@@ -64,22 +83,7 @@ def encode_feature(data, feature, feature_json):
     else:
         encode_geometry(feature.geometry, geometry_json)
 
-
-    keys = collections.OrderedDict()
-
-    for key, val in feature_json.get('properties').viewitems():
-        if not (key in keys):
-            keys[key] = True
-            data.keys.append(key)
-
-        feature.properties.append(keys.keys().index(key))
-        feature.properties.append(len(data.values))
-
-        value = data.values.add()
-        if isinstance(val, unicode): value.string_value = val
-        elif isinstance(val, float): value.double_value = val
-        elif isinstance(val, int) or isinstance(val, long): value.int_value = val
-        elif isinstance(val, bool): value.bool_value = val
+    encode_properties(data, feature.properties, feature_json.get('properties'))
 
 
 def encode(obj):
