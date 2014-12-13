@@ -67,6 +67,14 @@ def decode_properties(data, properties):
     return obj
 
 
+def decode_geometry_collection(geometry_collection, dimensions, precision):
+    obj = {'type': 'GeometryCollection'}
+    geometries = obj['geometries'] = []
+    for geometry in geometry_collection.geometries:
+        geometries.append(decode_geometry(geometry, dimensions, precision))
+    return obj
+
+
 def decode_feature(data, feature):
     obj = collections.OrderedDict()
 
@@ -79,11 +87,7 @@ def decode_feature(data, feature):
     geometry_type = feature.WhichOneof('geometry_type')
 
     if geometry_type == 'geometry_collection':
-        obj['geometry'] = {'type': 'Foobar'}
-        geometries = obj['geometry']['geometries'] = []
-
-        for geometry in feature.geometry_collection.geometries:
-            geometries.append(decode_geometry(geometry, data.dimensions, data.precision))
+        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, data.dimensions, data.precision)
 
     else: obj['geometry'] = decode_geometry(feature.geometry, data.dimensions, data.precision)
 
@@ -107,11 +111,7 @@ def decode(data):
         obj = decode_feature(data, data.feature)
 
     elif data_type == 'geometry_collection':
-        obj = {}
-        obj['type'] = 'GeometryCollection'
-        geometries = obj['geometries'] = []
-        for geometry in data.geometry_collection.geometries:
-            geometries.append(decode_geometry(geometry, data.dimensions, data.precision))
+        obj = decode_geometry_collection(data.geometry_collection, data.dimensions, data.precision)
 
     elif data_type == 'geometry':
         obj = decode_geometry(geometry, data.dimensions, data.precision)
