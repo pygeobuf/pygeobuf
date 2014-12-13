@@ -76,6 +76,6 @@ message Data {
     repeated string keys = 5;
     repeated Value values = 6;
 
-    optional bool has_altitude = 7 [default = false];
+    optional uint32 dimensions = 7 [default = 2];
     optional uint32 precision = 8 [default = 6];
 }

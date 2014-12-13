@@ -7,8 +7,10 @@ import geobuf_pb2
 import collections
 
 
+precision = 6 # TODO detect automatically and accept as a command line param
+
 def add_point(line_string, point):
-    for x in point: line_string.coords.append(int(x * 1e6))
+    for x in point: line_string.coords.append(long(x * pow(10, precision)))
 
 def populate_linestring(line_string, seq):
     prevPoint = None
@@ -36,14 +38,14 @@ def encode_geometry(geometry, geometry_json):
     if gt == 'Point':
         add_point(geometry.line_string, coords_json)
 
-    elif gt in ('MultiPoint', 'LineString'):
+    elif gt == 'MultiPoint' or gt == 'LineString':
         populate_linestring(geometry.line_string, coords_json)
 
-    elif gt in ('MultiLineString','Polygon'):
+    elif gt == 'MultiLineString' or gt == 'Polygon':
         line_strings = geometry.multi_line_string.line_strings
         for seq in coords_json: populate_linestring(line_strings.add(), seq)
 
-    elif gt in ('MultiPolygon'):
+    elif gt == 'MultiPolygon':
         for polygons in coords_json:
             poly = geometry.multi_polygon.polygons.add()
             for seq in polygons: populate_linestring(poly.line_strings.add(), seq)
