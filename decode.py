@@ -93,21 +93,28 @@ def decode_feature(data, feature):
 
 
 def decode(data):
-    obj = {}
 
-    if data.feature_collection:
+    data_type = data.WhichOneof('data_type')
+
+    if data_type == 'feature_collection':
+        obj = {}
         obj['type'] = 'FeatureCollection'
         features = obj['features'] = []
         for feature in data.feature_collection.features:
             features.append(decode_feature(data, feature))
 
-    elif data.feature:
-        obj['type'] = 'Feature'
+    elif data_type == 'feature':
+        obj = decode_feature(data, data.feature)
 
-    elif data.geometry_collection:
+    elif data_type == 'geometry_collection':
+        obj = {}
         obj['type'] = 'GeometryCollection'
+        geometries = obj['geometries'] = []
+        for geometry in data.geometry_collection.geometries:
+            geometries.append(decode_geometry(geometry, data.dimensions, data.precision))
 
-    else: obj['type'] = 'Geometry'
+    elif data_type == 'geometry':
+        obj = decode_geometry(geometry, data.dimensions, data.precision)
 
     return obj
 
