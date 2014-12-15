@@ -7,9 +7,6 @@ import geobuf_pb2
 import collections
 
 
-precision = 6 # TODO detect automatically and accept as a command line param
-
-
 def add_point(line, point, e):
     for x in point: line.coords.append(int(round(x * e)))
 
@@ -98,14 +95,18 @@ def encode_feature(data, feature, feature_json, e, keys, values):
     encode_properties(data, feature.properties, feature_json.get('properties'), keys, values)
 
 
-def encode(obj, precision=6):
+def encode(obj, precision=6, dim=2):
 
     data = geobuf_pb2.Data()
-    data_type = obj['type']
+
+    data.precision = precision
+    data.dimensions = dim
 
     e = pow(10, precision) # multiplier for converting coordinates into integers
     keys = collections.OrderedDict()
     values = collections.OrderedDict()
+
+    data_type = obj['type']
 
     if data_type == 'FeatureCollection':
         for feature_json in obj.get('features'):
@@ -125,13 +126,15 @@ def encode(obj, precision=6):
 
 if __name__ == '__main__':
     filename = sys.argv[1]
-
-    if len(sys.argv) > 2: precision = int(sys.argv[2])
-
     data = open(filename,'rb').read()
     json_object = json.loads(data)
 
-    proto = encode(json_object, precision)
+    if len(sys.argv) > 3:
+        proto = encode(json_object, int(sys.argv[2]), int(sys.argv[3]))
+    elif len(sys.argv) > 2:
+        proto = encode(json_object, int(sys.argv[2]))
+    else:
+        proto = encode(json_object)
 
     print 'Encoded in %d bytes out of %d (%d%%)' % (len(proto), len(data), 100 * len(proto) / len(data))
 
