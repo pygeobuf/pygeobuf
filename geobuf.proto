@@ -63,6 +63,7 @@ message Data {
             sint32 int_value = 4;
             uint32 uint_value = 5;
             bool bool_value = 6;
+            string json_value = 7;
         }
     }
 

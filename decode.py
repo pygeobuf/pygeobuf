@@ -61,7 +61,7 @@ def decode_properties(data, properties):
             elif value_type == 'double_value': obj[key] = val.double_value
             elif value_type == 'int_value': obj[key] = val.int_value
             elif value_type == 'bool_value': obj[key] = val.bool_value
-
+            elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
     return obj
 
 

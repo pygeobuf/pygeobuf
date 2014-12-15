@@ -61,12 +61,16 @@ def encode_properties(data, properties, props_json, keys, values):
         else:
             keyIndex = keys.keys().index(key)
 
+        value_is_json = isinstance(val, dict) or isinstance(val, list)
+        if value_is_json: val = json.dumps(val, separators=(',',':'))
+
         if not (val in values):
             values[val] = True
             value = data.values.add()
             valueIndex = len(data.values) - 1
 
-            if isinstance(val, unicode): value.string_value = val
+            if value_is_json: value.json_value = val
+            elif isinstance(val, unicode): value.string_value = val
             elif isinstance(val, float):
                 if val.is_integer(): value.int_value = int(val)
                 else: value.double_value = val

@@ -10,6 +10,10 @@
         "float": 123.456,
         "bool": false,
         "empty": "",
-        "zero": 0
+        "zero": 0,
+        "complex": {
+            "foo": "bar",
+            "baz": [1, 2, 3]
+        }
     }
 }
