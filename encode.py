@@ -54,9 +54,7 @@ def encode_geometry(geometry, geometry_json, e):
             for seq in polygons: populate_line(poly.line_strings.add(), seq, e)
 
 
-def encode_properties(data, properties, props_json):
-
-    keys = collections.OrderedDict()
+def encode_properties(data, properties, props_json, keys):
 
     for key, val in props_json.viewitems():
         if not (key in keys):
@@ -73,7 +71,7 @@ def encode_properties(data, properties, props_json):
         elif isinstance(val, bool): value.bool_value = val
 
 
-def encode_feature(data, feature, feature_json, e):
+def encode_feature(data, feature, feature_json, e, keys):
 
     if 'id' in feature_json:
         id = feature_json['id']
@@ -88,7 +86,7 @@ def encode_feature(data, feature, feature_json, e):
     else:
         encode_geometry(feature.geometry, geometry_json, e)
 
-    encode_properties(data, feature.properties, feature_json.get('properties'))
+    encode_properties(data, feature.properties, feature_json.get('properties'), keys)
 
 
 def encode(obj, precision=6):
@@ -97,13 +95,14 @@ def encode(obj, precision=6):
     data_type = obj['type']
 
     e = pow(10, precision) # multiplier for converting coordinates into integers
+    keys = collections.OrderedDict()
 
     if data_type == 'FeatureCollection':
         for feature_json in obj.get('features'):
-            encode_feature(data, data.feature_collection.features.add(), feature_json, e)
+            encode_feature(data, data.feature_collection.features.add(), feature_json, e, keys)
 
     elif data_type == 'Feature':
-        encode_feature(data, data.feature, obj, e)
+        encode_feature(data, data.feature, obj, e, keys)
 
     elif data_type == 'GeometryCollection':
         for geometry_json in obj.get('geometries'):

@@ -32,7 +32,7 @@ def decode_geometry(geometry, dim, e):
     gt = obj['type'] = geometry_types[geometry.type]
 
     if gt == 'Point':
-        obj['coordinates'] = decode_point(geometry.line_string.coords, e)
+        obj['coordinates'] = decode_point(geometry.line_string.coords, dim, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
         obj['coordinates'] = decode_line(geometry.line_string, dim, e)
@@ -116,7 +116,7 @@ def decode(data_str):
         obj = decode_geometry_collection(data.geometry_collection, dim, e)
 
     elif data_type == 'geometry':
-        obj = decode_geometry(geometry, dim, e)
+        obj = decode_geometry(data.geometry, dim, e)
 
     return obj
 

@@ -11,6 +11,7 @@ class DynamicClassBase(unittest.TestCase):
 
 def make_test_function(filename):
     def test(self):
+        # self.maxDiff = None
         geojson = json.loads(open(filename, 'rb').read())
         pb = encode.encode(geojson)
         geojson2 = decode.decode(pb)
@@ -20,7 +21,7 @@ def make_test_function(filename):
 if __name__ == '__main__':
 
     for filename in glob.glob("./fixtures/*.json"):
-        klassname = 'Test_' + filename
+        klassname = 'Test_' + filename.replace('/fixtures/', '').replace('.json', '')
         globals()[klassname] = type(klassname,
             (DynamicClassBase,), {'test_encode_decode': make_test_function(filename)})
 

@@ -1,0 +1,15 @@
+{
+    "type": "Feature",
+    "geometry": {
+        "type": "Point",
+        "coordinates": [100.0, 0.0]
+    },
+    "properties": {
+        "string": "foo",
+        "int": 5,
+        "float": 123.456,
+        "bool": false,
+        "empty": "",
+        "zero": 0
+    }
+}
