@@ -1,3 +1,5 @@
 geobuf_pb2.py
 geobuf_pb2.pyc
-fixtures
+fixtures/tmp
+fixtures/*.pbf
+fixtures/*.pbf.json
