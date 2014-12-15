@@ -11,11 +11,11 @@ def decode_point(line, dim, precision):
     return [float(x) / precision for x in line]
 
 
-def decode_linestring(line, dim, precision):
+def decode_line(line, dim, precision):
     obj = []
     coords = line.coords
-    r = range(0, dim)
-    p0 = [0 for i in xrange(dim)]
+    r = range(dim)
+    p0 = [0 for i in r]
 
     for i in xrange(0, len(coords), dim):
         p = [p0[j] + coords[i + j] for j in r]
@@ -35,16 +35,16 @@ def decode_geometry(geometry, dim, precision):
         obj['coordinates'] = decode_point(geometry.line_string.coords, precision)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
-        obj['coordinates'] = decode_linestring(geometry.line_string, dim, precision)
+        obj['coordinates'] = decode_line(geometry.line_string, dim, precision)
 
     elif (gt == 'MultiLineString') or (gt == 'Polygon'):
         line_strings = geometry.multi_line_string.line_strings
-        obj['coordinates'] = [decode_linestring(line, dim, precision) for line in line_strings]
+        obj['coordinates'] = [decode_line(line, dim, precision) for line in line_strings]
 
     elif gt == 'MultiPolygon':
         obj['coordinates'] = []
         for polygon in geometry.multi_polygon.polygons:
-            obj['coordinates'].append([decode_linestring(line, dim, precision) for line in polygon.line_strings])
+            obj['coordinates'].append([decode_line(line, dim, precision) for line in polygon.line_strings])
 
     return obj
 

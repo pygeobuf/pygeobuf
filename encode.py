@@ -9,15 +9,18 @@ import collections
 
 precision = 6 # TODO detect automatically and accept as a command line param
 
-def add_point(line_string, point):
-    for x in point: line_string.coords.append(int(round(x * pow(10, precision))))
 
-def populate_linestring(line_string, seq):
-    prevPoint = None
-    for point in seq:
-        if prevPoint is None: add_point(line_string, point)
-        else: add_point(line_string, [a - b for a, b in zip(point, prevPoint)]) # delta encoding
-        prevPoint = point
+def add_point(line, point):
+    for x in point: line.coords.append(int(round(x * pow(10, precision))))
+
+
+def populate_line(line, seq):
+    p0 = [0 for i in seq[0]]
+    r = range(len(p0))
+    for p in seq:
+        add_point(line, [p[i] - p0[i] for i in r]) # delta encoding
+        p0 = p
+
 
 def encode_geometry(geometry, geometry_json):
 
@@ -39,16 +42,16 @@ def encode_geometry(geometry, geometry_json):
         add_point(geometry.line_string, coords_json)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
-        populate_linestring(geometry.line_string, coords_json)
+        populate_line(geometry.line_string, coords_json)
 
     elif gt == 'MultiLineString' or gt == 'Polygon':
         line_strings = geometry.multi_line_string.line_strings
-        for seq in coords_json: populate_linestring(line_strings.add(), seq)
+        for seq in coords_json: populate_line(line_strings.add(), seq)
 
     elif gt == 'MultiPolygon':
         for polygons in coords_json:
             poly = geometry.multi_polygon.polygons.add()
-            for seq in polygons: populate_linestring(poly.line_strings.add(), seq)
+            for seq in polygons: populate_line(poly.line_strings.add(), seq)
 
 
 def encode_properties(data, properties, props_json):
