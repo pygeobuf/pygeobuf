@@ -16,10 +16,10 @@ def decode_linestring(line, dim, precision):
     point = []
     int_coords = []
     for i, x in enumerate(line.coords):
-        coord = float(x)
+        coord = x
         if i >= dim: coord += int_coords[i - dim]
         int_coords.append(coord)
-        point.append(coord / precision)
+        point.append(float(coord) / precision)
         if (i + 1) % dim == 0:
             obj.append(point)
             point = []

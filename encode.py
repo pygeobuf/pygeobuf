@@ -10,7 +10,7 @@ import collections
 precision = 6 # TODO detect automatically and accept as a command line param
 
 def add_point(line_string, point):
-    for x in point: line_string.coords.append(long(x * pow(10, precision)))
+    for x in point: line_string.coords.append(int(round(x * pow(10, precision))))
 
 def populate_linestring(line_string, seq):
     prevPoint = None
