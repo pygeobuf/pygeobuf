@@ -93,7 +93,10 @@ def decode_feature(data, feature, dim, precision):
     return obj
 
 
-def decode(data):
+def decode(data_str):
+
+    data = geobuf_pb2.Data()
+    data.ParseFromString(data_str)
 
     data_type = data.WhichOneof('data_type')
 
@@ -121,10 +124,6 @@ def decode(data):
 if __name__ == "__main__":
     filename = sys.argv[1]
     data_str = open(filename,'rb').read()
-
-    data = geobuf_pb2.Data()
-    data.ParseFromString(data_str)
-
-    obj = decode(data)
-    open(filename.replace('.pbf', '.decoded.json'), 'wb').write(json.dumps(obj))
+    obj = decode(data_str)
+    open(filename.replace('.pbf', '.pbf.json'), 'wb').write(json.dumps(obj))
 

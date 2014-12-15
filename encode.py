@@ -120,4 +120,4 @@ if __name__ == '__main__':
 
     print 'Encoded in %d bytes out of %d (%d%%)' % (len(proto), len(data), 100 * len(proto) / len(data))
 
-    open(filename + '.pbf', 'wb').write(proto)
+    open(filename.replace('.json', '.pbf'), 'wb').write(proto)
