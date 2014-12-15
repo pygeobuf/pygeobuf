@@ -8,33 +8,31 @@ import collections
 
 
 def decode_point(line, dim, precision):
-    return [float(x) / precision for x in line.coords]
+    return [float(x) / precision for x in line]
 
 
 def decode_linestring(line, dim, precision):
     obj = []
-    point = []
-    int_coords = []
-    for i, x in enumerate(line.coords):
-        coord = x
-        if i >= dim: coord += int_coords[i - dim]
-        int_coords.append(coord)
-        point.append(float(coord) / precision)
-        if (i + 1) % dim == 0:
-            obj.append(point)
-            point = []
+    coords = line.coords
+    r = range(0, dim)
+    p0 = [0 for i in xrange(dim)]
+
+    for i in xrange(0, len(coords), dim):
+        p = [p0[j] + coords[i + j] for j in r]
+        obj.append(decode_point(p, dim, precision))
+        p0 = p
+
     return obj
 
 
 geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon')
 
-def decode_geometry(geometry, dim, digits):
+def decode_geometry(geometry, dim, precision):
     obj = {}
     gt = obj['type'] = geometry_types[geometry.type]
-    precision = pow(10, digits)
 
     if gt == 'Point':
-        obj['coordinates'] = decode_point(geometry.line_string, precision)
+        obj['coordinates'] = decode_point(geometry.line_string.coords, precision)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
         obj['coordinates'] = decode_linestring(geometry.line_string, dim, precision)
@@ -67,29 +65,28 @@ def decode_properties(data, properties):
     return obj
 
 
-def decode_geometry_collection(geometry_collection, dimensions, precision):
+def decode_geometry_collection(geometry_collection, dim, precision):
     obj = {'type': 'GeometryCollection'}
     geometries = obj['geometries'] = []
     for geometry in geometry_collection.geometries:
-        geometries.append(decode_geometry(geometry, dimensions, precision))
+        geometries.append(decode_geometry(geometry, dim, precision))
     return obj
 
 
-def decode_feature(data, feature):
+def decode_feature(data, feature, dim, precision):
     obj = collections.OrderedDict()
+    obj['type'] = 'Feature'
 
     id_type = feature.WhichOneof('id_type')
     if id_type == 'id': obj['id'] = feature.id
     elif id_type == 'uint_id': obj['id'] = feature.uint_id
 
-    obj['type'] = 'Feature'
-
     geometry_type = feature.WhichOneof('geometry_type')
 
     if geometry_type == 'geometry_collection':
-        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, data.dimensions, data.precision)
+        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, dim, precision)
 
-    else: obj['geometry'] = decode_geometry(feature.geometry, data.dimensions, data.precision)
+    else: obj['geometry'] = decode_geometry(feature.geometry, dim, precision)
 
     obj['properties'] = decode_properties(data, feature.properties)
 
@@ -100,21 +97,23 @@ def decode(data):
 
     data_type = data.WhichOneof('data_type')
 
+    precision = pow(10, data.precision)
+    dim = data.dimensions
+
     if data_type == 'feature_collection':
-        obj = {}
-        obj['type'] = 'FeatureCollection'
+        obj = {'type': 'FeatureCollection'}
         features = obj['features'] = []
         for feature in data.feature_collection.features:
-            features.append(decode_feature(data, feature))
+            features.append(decode_feature(data, feature, dim, precision))
 
     elif data_type == 'feature':
-        obj = decode_feature(data, data.feature)
+        obj = decode_feature(data, data.feature, dim, precision)
 
     elif data_type == 'geometry_collection':
-        obj = decode_geometry_collection(data.geometry_collection, data.dimensions, data.precision)
+        obj = decode_geometry_collection(data.geometry_collection, dim, precision)
 
     elif data_type == 'geometry':
-        obj = decode_geometry(geometry, data.dimensions, data.precision)
+        obj = decode_geometry(geometry, dim, precision)
 
     return obj
 
