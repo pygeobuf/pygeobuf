@@ -67,7 +67,9 @@ def encode_properties(data, properties, props_json, keys, values):
             valueIndex = len(data.values) - 1
 
             if isinstance(val, unicode): value.string_value = val
-            elif isinstance(val, float): value.double_value = val
+            elif isinstance(val, float):
+                if val.is_integer(): value.int_value = int(val)
+                else: value.double_value = val
             elif isinstance(val, int) or isinstance(val, long): value.int_value = val
             elif isinstance(val, bool): value.bool_value = val
         else:
