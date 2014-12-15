@@ -7,11 +7,11 @@ import geobuf_pb2
 import collections
 
 
-def decode_point(line, dim, precision):
-    return [float(x) / precision for x in line]
+def decode_point(line, dim, e):
+    return [float(x) / e for x in line]
 
 
-def decode_line(line, dim, precision):
+def decode_line(line, dim, e):
     obj = []
     coords = line.coords
     r = range(dim)
@@ -19,7 +19,7 @@ def decode_line(line, dim, precision):
 
     for i in xrange(0, len(coords), dim):
         p = [p0[j] + coords[i + j] for j in r]
-        obj.append(decode_point(p, dim, precision))
+        obj.append(decode_point(p, dim, e))
         p0 = p
 
     return obj
@@ -27,24 +27,24 @@ def decode_line(line, dim, precision):
 
 geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon')
 
-def decode_geometry(geometry, dim, precision):
+def decode_geometry(geometry, dim, e):
     obj = {}
     gt = obj['type'] = geometry_types[geometry.type]
 
     if gt == 'Point':
-        obj['coordinates'] = decode_point(geometry.line_string.coords, precision)
+        obj['coordinates'] = decode_point(geometry.line_string.coords, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
-        obj['coordinates'] = decode_line(geometry.line_string, dim, precision)
+        obj['coordinates'] = decode_line(geometry.line_string, dim, e)
 
     elif (gt == 'MultiLineString') or (gt == 'Polygon'):
         line_strings = geometry.multi_line_string.line_strings
-        obj['coordinates'] = [decode_line(line, dim, precision) for line in line_strings]
+        obj['coordinates'] = [decode_line(line, dim, e) for line in line_strings]
 
     elif gt == 'MultiPolygon':
         obj['coordinates'] = []
         for polygon in geometry.multi_polygon.polygons:
-            obj['coordinates'].append([decode_line(line, dim, precision) for line in polygon.line_strings])
+            obj['coordinates'].append([decode_line(line, dim, e) for line in polygon.line_strings])
 
     return obj
 
@@ -65,15 +65,15 @@ def decode_properties(data, properties):
     return obj
 
 
-def decode_geometry_collection(geometry_collection, dim, precision):
+def decode_geometry_collection(geometry_collection, dim, e):
     obj = {'type': 'GeometryCollection'}
     geometries = obj['geometries'] = []
     for geometry in geometry_collection.geometries:
-        geometries.append(decode_geometry(geometry, dim, precision))
+        geometries.append(decode_geometry(geometry, dim, e))
     return obj
 
 
-def decode_feature(data, feature, dim, precision):
+def decode_feature(data, feature, dim, e):
     obj = collections.OrderedDict()
     obj['type'] = 'Feature'
 
@@ -84,9 +84,9 @@ def decode_feature(data, feature, dim, precision):
     geometry_type = feature.WhichOneof('geometry_type')
 
     if geometry_type == 'geometry_collection':
-        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, dim, precision)
+        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, dim, e)
 
-    else: obj['geometry'] = decode_geometry(feature.geometry, dim, precision)
+    else: obj['geometry'] = decode_geometry(feature.geometry, dim, e)
 
     obj['properties'] = decode_properties(data, feature.properties)
 
@@ -100,23 +100,23 @@ def decode(data_str):
 
     data_type = data.WhichOneof('data_type')
 
-    precision = pow(10, data.precision)
+    e = pow(10, data.precision)
     dim = data.dimensions
 
     if data_type == 'feature_collection':
         obj = {'type': 'FeatureCollection'}
         features = obj['features'] = []
         for feature in data.feature_collection.features:
-            features.append(decode_feature(data, feature, dim, precision))
+            features.append(decode_feature(data, feature, dim, e))
 
     elif data_type == 'feature':
-        obj = decode_feature(data, data.feature, dim, precision)
+        obj = decode_feature(data, data.feature, dim, e)
 
     elif data_type == 'geometry_collection':
-        obj = decode_geometry_collection(data.geometry_collection, dim, precision)
+        obj = decode_geometry_collection(data.geometry_collection, dim, e)
 
     elif data_type == 'geometry':
-        obj = decode_geometry(geometry, dim, precision)
+        obj = decode_geometry(geometry, dim, e)
 
     return obj
 

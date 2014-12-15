@@ -10,19 +10,19 @@ import collections
 precision = 6 # TODO detect automatically and accept as a command line param
 
 
-def add_point(line, point):
-    for x in point: line.coords.append(int(round(x * pow(10, precision))))
+def add_point(line, point, e):
+    for x in point: line.coords.append(int(round(x * e)))
 
 
-def populate_line(line, seq):
+def populate_line(line, seq, e):
     p0 = [0 for i in seq[0]]
     r = range(len(p0))
     for p in seq:
-        add_point(line, [p[i] - p0[i] for i in r]) # delta encoding
+        add_point(line, [p[i] - p0[i] for i in r], e) # delta encoding
         p0 = p
 
 
-def encode_geometry(geometry, geometry_json):
+def encode_geometry(geometry, geometry_json, e):
 
     gt = geometry_json['type']
 
@@ -39,19 +39,19 @@ def encode_geometry(geometry, geometry_json):
     coords_json = geometry_json.get('coordinates')
 
     if gt == 'Point':
-        add_point(geometry.line_string, coords_json)
+        add_point(geometry.line_string, coords_json, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
-        populate_line(geometry.line_string, coords_json)
+        populate_line(geometry.line_string, coords_json, e)
 
     elif gt == 'MultiLineString' or gt == 'Polygon':
         line_strings = geometry.multi_line_string.line_strings
-        for seq in coords_json: populate_line(line_strings.add(), seq)
+        for seq in coords_json: populate_line(line_strings.add(), seq, e)
 
     elif gt == 'MultiPolygon':
         for polygons in coords_json:
             poly = geometry.multi_polygon.polygons.add()
-            for seq in polygons: populate_line(poly.line_strings.add(), seq)
+            for seq in polygons: populate_line(poly.line_strings.add(), seq, e)
 
 
 def encode_properties(data, properties, props_json):
@@ -73,7 +73,7 @@ def encode_properties(data, properties, props_json):
         elif isinstance(val, bool): value.bool_value = val
 
 
-def encode_feature(data, feature, feature_json):
+def encode_feature(data, feature, feature_json, e):
 
     if 'id' in feature_json:
         id = feature_json['id']
@@ -84,39 +84,45 @@ def encode_feature(data, feature, feature_json):
 
     if geometry_json['type'] == 'GeometryCollection':
         for single_geometry_json in geometry_json.get('geometries'):
-            encode_geometry(feature.geometry_collection.geometries.add(), single_geometry_json)
+            encode_geometry(feature.geometry_collection.geometries.add(), single_geometry_json, e)
     else:
-        encode_geometry(feature.geometry, geometry_json)
+        encode_geometry(feature.geometry, geometry_json, e)
 
     encode_properties(data, feature.properties, feature_json.get('properties'))
 
 
-def encode(obj):
+def encode(obj, precision=6):
 
     data = geobuf_pb2.Data()
     data_type = obj['type']
 
+    e = pow(10, precision) # multiplier for converting coordinates into integers
+
     if data_type == 'FeatureCollection':
         for feature_json in obj.get('features'):
-            encode_feature(data, data.feature_collection.features.add(), feature_json)
+            encode_feature(data, data.feature_collection.features.add(), feature_json, e)
 
     elif data_type == 'Feature':
-        encode_feature(data, data.feature, obj)
+        encode_feature(data, data.feature, obj, e)
 
     elif data_type == 'GeometryCollection':
         for geometry_json in obj.get('geometries'):
-            encode_geometry(data.geometry_collection.geometries.add(), geometry_json)
+            encode_geometry(data.geometry_collection.geometries.add(), geometry_json, e)
 
-    else: encode_geometry(data.geometry, obj)
+    else: encode_geometry(data.geometry, obj, e)
 
     return data.SerializeToString();
 
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+
+    if len(sys.argv) > 2: precision = int(sys.argv[2])
+
     data = open(filename,'rb').read()
     json_object = json.loads(data)
-    proto = encode(json_object)
+
+    proto = encode(json_object, precision)
 
     print 'Encoded in %d bytes out of %d (%d%%)' % (len(proto), len(data), 100 * len(proto) / len(data))
 

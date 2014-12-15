@@ -7,8 +7,8 @@ Reference encoding/decoding Python implementation of the [new revision](https://
 Command line:
 
 ```bash
-./encode.py us-states.json # generates us-states.pbf
-./decode.py us-states.pbf  # generates us-states.pbf.json
+./encode.py us-states.json 6 # encodes into us-states.pbf; 2nd optional argument is precision (num of digits)
+./decode.py us-states.pbf    # decodes into us-states.pbf.json
 ```
 
 As a module:
@@ -16,7 +16,7 @@ As a module:
 ```python
 import geobuf
 
-pbf_str = geobuf.encode(json)    # encode a GeoJSON object into a Geobuf string
+pbf_str = geobuf.encode(json, 6) # encode a GeoJSON object into a Geobuf string, optionally specifying precision
 geojson = geobuf.decode(pbf_str) # decode a Geobuf string to a GeJSON object
 ```
 
