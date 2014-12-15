@@ -1,14 +1,14 @@
-### pygeobuf
+## pygeobuf
 
 Reference encoding/decoding Python implementation of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), our compact geospatial format (binary GeoJSON equivalent).
 
-#### Usage
+### Usage
 
 Command line:
 
 ```bash
-./encode.py us-states.json 6 # encodes into us-states.pbf; 2nd optional argument is precision (num of digits)
-./decode.py us-states.pbf    # decodes into us-states.pbf.json
+./encode.py sample.json 6 # -> sample.pbf, with 6-digit precision
+./decode.py sample.pbf    # -> sample.pbf.json
 ```
 
 As a module:
@@ -16,11 +16,13 @@ As a module:
 ```python
 import geobuf
 
-pbf_str = geobuf.encode(json, 6) # encode a GeoJSON object into a Geobuf string, optionally specifying precision
-geojson = geobuf.decode(pbf_str) # decode a Geobuf string to a GeJSON object
+pbf = geobuf.encode(geojson, 6) # GeoJSON -> Geobuf string
+geojson = geobuf.decode(pbf)    # Geobuf string -> GeoJSON
 ```
 
-#### Tests
+Precision (number of digits after the decimal point) is optional, `6` by default.
+
+### Tests
 
 ```bash
 python test.py -v
