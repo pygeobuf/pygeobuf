@@ -1,8 +1,15 @@
 ## pygeobuf
 
-Reference encoding/decoding implementation (in Python) of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), a compact geospatial format (essentially a binary form of GeoJSON).
+Reference encoding/decoding implementation (in Python) of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), a compact geospatial format that supports lossless compression of GeoJSON and TopoJSON data.
 
-The format is designed to be able to store any GeoJSON or TopoJSON data losslessly.
+### Sample compression sizes
+
+ | normal | gzipped
+--- | --- | ---
+US zips GeoJSON | 101.85 MB | 26.67 MB
+US zips Geobuf | 12.43 MB | 10.62 MB
+world-50m TopoJSON | 727 KB | 228 KB
+world-50m Geobuf | 219 KB | 175 KB
 
 ### Usage
 
