@@ -131,7 +131,10 @@ def encode_topo_geometry(geometry, data, name, geometry_json, e, keys, values):
     elif gt == 'Point':
         add_point(geometry.line_string, coords, e)
 
-    elif gt == 'MultiPoint' or gt == 'LineString':
+    elif gt == 'MultiPoint':
+        populate_line(geometry.line_string, coords, e)
+
+    elif gt == 'LineString':
         populate_arcs(geometry.line_string, arcs)
 
     elif gt == 'MultiLineString' or gt == 'Polygon':
