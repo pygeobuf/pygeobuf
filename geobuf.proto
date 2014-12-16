@@ -2,57 +2,66 @@ option optimize_for = LITE_RUNTIME;
 
 message Data {
 
-    message FeatureCollection {
-        repeated Feature features = 1;
+    oneof data_type {
+        FeatureCollection feature_collection = 1;
+        Feature feature = 2;
+        Geometry geometry = 3;
     }
+
+    repeated string keys = 4;
+    repeated Value values = 5;
+
+    optional uint32 dimensions = 6 [default = 2];
+    optional uint32 precision = 7 [default = 6];
+
 
     message Feature {
+        required Geometry geometry = 1;
 
-        oneof geometry_type {
-            Geometry geometry = 1;
-            GeometryCollection geometry_collection = 2;
-        }
-
-        repeated uint32 properties = 3 [packed = true];
+        repeated uint32 properties = 2 [packed = true];
 
         oneof id_type {
-            string id = 4;
-            uint32 uint_id = 5;
+            string id = 3;
+            uint32 uint_id = 4;
         }
-    }
-
-    message GeometryCollection {
-        repeated Geometry geometries = 1;
     }
 
     message Geometry {
-
-        enum Type {
-            POINT = 0;
-            MULTIPOINT = 1;
-            LINESTRING = 2;
-            MULTILINESTRING = 3;
-            POLYGON = 4;
-            MULTIPOLYGON = 5;
-        }
-
-        message LineString { // delta-encoded int coordinates
-            repeated sint32 coords = 1 [packed = true];
-        }
-        message MultiLineString {
-            repeated LineString line_strings = 1;
-        }
-        message MultiPolygon {
-            repeated MultiLineString polygons = 1;
-        }
-
         required Type type = 1;
 
         oneof coord_type {
             LineString line_string = 2; // Point, MultiPoint, LineString
             MultiLineString multi_line_string = 3; // Polygon, MultiLineString
             MultiPolygon multi_polygon = 4; // MultiPolygon
+            GeometryCollection geometry_collection = 5; // GeometryCollection
         }
+    }
+
+    message FeatureCollection {
+        repeated Feature features = 1;
+    }
+    message GeometryCollection {
+        repeated Geometry geometries = 1;
+    }
+
+    message LineString { // delta-encoded int coordinates
+        repeated sint32 coords = 1 [packed = true];
+    }
+    message MultiLineString {
+        repeated LineString line_strings = 1;
+    }
+    message MultiPolygon {
+        repeated MultiLineString polygons = 1;
+    }
+
+    enum Type {
+        POINT = 0;
+        MULTIPOINT = 1;
+        LINESTRING = 2;
+        MULTILINESTRING = 3;
+        POLYGON = 4;
+        MULTIPOLYGON = 5;
+        GEOMETRYCOLLECTION = 6;
     }
 
     message Value {
@@ -66,17 +75,4 @@ message Data {
             string json_value = 7;
         }
     }
-
-    oneof data_type {
-        FeatureCollection feature_collection = 1;
-        Feature feature = 2;
-        GeometryCollection geometry_collection = 3;
-        Geometry geometry = 4;
-    }
-
-    repeated string keys = 5;
-    repeated Value values = 6;
-
-    optional uint32 dimensions = 7 [default = 2];
-    optional uint32 precision = 8 [default = 6];
 }

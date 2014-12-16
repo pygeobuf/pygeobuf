@@ -22,31 +22,35 @@ def populate_line(line, seq, e):
 def encode_geometry(geometry, geometry_json, e):
 
     gt = geometry_json['type']
+    coords = geometry_json.get('coordinates')
 
-    Geometry = geobuf_pb2.Data.Geometry
+    Data = geobuf_pb2.Data
     geometry.type = {
-        'Point': Geometry.POINT,
-        'MultiPoint': Geometry.MULTIPOINT,
-        'LineString': Geometry.LINESTRING,
-        'MultiLineString': Geometry.MULTILINESTRING,
-        'Polygon': Geometry.POLYGON,
-        'MultiPolygon': Geometry.MULTIPOLYGON
+        'Point': Data.POINT,
+        'MultiPoint': Data.MULTIPOINT,
+        'LineString': Data.LINESTRING,
+        'MultiLineString': Data.MULTILINESTRING,
+        'Polygon': Data.POLYGON,
+        'MultiPolygon': Data.MULTIPOLYGON,
+        'GeometryCollection': Data.GEOMETRYCOLLECTION
     }[gt]
 
-    coords_json = geometry_json.get('coordinates')
+    if gt == 'GeometryCollection':
+        for single_geometry_json in geometry_json.get('geometries'):
+            encode_geometry(geometry.geometry_collection.geometries.add(), single_geometry_json, e)
 
-    if gt == 'Point':
-        add_point(geometry.line_string, coords_json, e)
+    elif gt == 'Point':
+        add_point(geometry.line_string, coords, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
-        populate_line(geometry.line_string, coords_json, e)
+        populate_line(geometry.line_string, coords, e)
 
     elif gt == 'MultiLineString' or gt == 'Polygon':
         line_strings = geometry.multi_line_string.line_strings
-        for seq in coords_json: populate_line(line_strings.add(), seq, e)
+        for seq in coords: populate_line(line_strings.add(), seq, e)
 
     elif gt == 'MultiPolygon':
-        for polygons in coords_json:
+        for polygons in coords:
             poly = geometry.multi_polygon.polygons.add()
             for seq in polygons: populate_line(poly.line_strings.add(), seq, e)
 
@@ -90,14 +94,7 @@ def encode_feature(data, feature, feature_json, e, keys, values):
         if isinstance(id, int) and id >= 0: feature.uint_id = idts
         else: feature.id = id
 
-    geometry_json = feature_json.get('geometry')
-
-    if geometry_json['type'] == 'GeometryCollection':
-        for single_geometry_json in geometry_json.get('geometries'):
-            encode_geometry(feature.geometry_collection.geometries.add(), single_geometry_json, e)
-    else:
-        encode_geometry(feature.geometry, geometry_json, e)
-
+    encode_geometry(feature.geometry, feature_json.get('geometry'), e)
     encode_properties(data, feature.properties, feature_json.get('properties'), keys, values)
 
 
@@ -120,10 +117,6 @@ def encode(obj, precision=6, dim=2):
 
     elif data_type == 'Feature':
         encode_feature(data, data.feature, obj, e, keys, values)
-
-    elif data_type == 'GeometryCollection':
-        for geometry_json in obj.get('geometries'):
-            encode_geometry(data.geometry_collection.geometries.add(), geometry_json, e)
 
     else: encode_geometry(data.geometry, obj, e)
 

@@ -25,13 +25,17 @@ def decode_line(line, dim, e):
     return obj
 
 
-geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString', 'Polygon', 'MultiPolygon')
+geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString',
+                  'Polygon', 'MultiPolygon', 'GeometryCollection')
 
 def decode_geometry(geometry, dim, e):
     obj = {}
     gt = obj['type'] = geometry_types[geometry.type]
 
-    if gt == 'Point':
+    if gt == 'GeometryCollection':
+        obj['geometries'] = [decode_geometry(geom, dim, e) for geom in geometry.geometry_collection.geometries]
+
+    elif gt == 'Point':
         obj['coordinates'] = decode_point(geometry.line_string.coords, dim, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
@@ -65,14 +69,6 @@ def decode_properties(data, properties):
     return obj
 
 
-def decode_geometry_collection(geometry_collection, dim, e):
-    obj = {'type': 'GeometryCollection'}
-    geometries = obj['geometries'] = []
-    for geometry in geometry_collection.geometries:
-        geometries.append(decode_geometry(geometry, dim, e))
-    return obj
-
-
 def decode_feature(data, feature, dim, e):
     obj = collections.OrderedDict()
     obj['type'] = 'Feature'
@@ -81,13 +77,7 @@ def decode_feature(data, feature, dim, e):
     if id_type == 'id': obj['id'] = feature.id
     elif id_type == 'uint_id': obj['id'] = feature.uint_id
 
-    geometry_type = feature.WhichOneof('geometry_type')
-
-    if geometry_type == 'geometry_collection':
-        obj['geometry'] = decode_geometry_collection(feature.geometry_collection, dim, e)
-
-    else: obj['geometry'] = decode_geometry(feature.geometry, dim, e)
-
+    obj['geometry'] = decode_geometry(feature.geometry, dim, e)
     obj['properties'] = decode_properties(data, feature.properties)
 
     return obj
@@ -98,10 +88,10 @@ def decode(data_str):
     data = geobuf_pb2.Data()
     data.ParseFromString(data_str)
 
-    data_type = data.WhichOneof('data_type')
-
     e = pow(10, data.precision)
     dim = data.dimensions
+
+    data_type = data.WhichOneof('data_type')
 
     if data_type == 'feature_collection':
         obj = {'type': 'FeatureCollection'}
@@ -111,9 +101,6 @@ def decode(data_str):
 
     elif data_type == 'feature':
         obj = decode_feature(data, data.feature, dim, e)
-
-    elif data_type == 'geometry_collection':
-        obj = decode_geometry_collection(data.geometry_collection, dim, e)
 
     elif data_type == 'geometry':
         obj = decode_geometry(data.geometry, dim, e)
