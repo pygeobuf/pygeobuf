@@ -149,8 +149,6 @@ def encode_feature(data, feature, feature_json, e, keys, values):
 
 def encode_topology(data, data_json, e, keys, values):
 
-    data.is_topojson = True
-
     transform_json = data_json.get('transform')
 
     if transform_json:

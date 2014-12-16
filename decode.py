@@ -157,7 +157,7 @@ def decode(data_str):
     e = pow(10, data.precision)
     dim = data.dimensions
 
-    if data.is_topojson: return decode_topology(data, dim, e)
+    if len(data.arcs) > 0: return decode_topology(data, dim, e)
 
     data_type = data.WhichOneof('data_type')
 
