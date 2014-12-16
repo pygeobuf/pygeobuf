@@ -18,8 +18,9 @@ message Data {
     optional uint32 precision = 7 [default = 6];
 
     // TopoJSON stuff
-    optional Transform transform = 8;
-    repeated LineString arcs = 9;
+    optional bool is_topojson = 8;
+    optional Transform transform = 9;
+    repeated LineString arcs = 10;
 
     message Feature {
         required Geometry geometry = 1;

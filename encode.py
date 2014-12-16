@@ -15,29 +15,39 @@ def populate_line(line, seq, e):
     p0 = [0 for i in seq[0]]
     r = range(len(p0))
     for p in seq:
-        add_point(line, [p[i] - p0[i] for i in r], e) # delta encoding
+        # delta-encode coordinates
+        add_point(line, [p[i] - p0[i] for i in r], e)
         p0 = p
 
+
+def populate_arcs(arc_string, indexes):
+    i0 = 0
+    for i in indexes:
+        # delta-encode arc indexes
+        arc_string.values.append(i - i0)
+        i0 = i
+
+
+geometry_types = {
+    'Point': 0,
+    'MultiPoint': 1,
+    'LineString': 2,
+    'MultiLineString': 3,
+    'Polygon': 4,
+    'MultiPolygon': 5,
+    'GeometryCollection': 6
+}
 
 def encode_geometry(geometry, geometry_json, e):
 
     gt = geometry_json['type']
     coords = geometry_json.get('coordinates')
 
-    Data = geobuf_pb2.Data
-    geometry.type = {
-        'Point': Data.POINT,
-        'MultiPoint': Data.MULTIPOINT,
-        'LineString': Data.LINESTRING,
-        'MultiLineString': Data.MULTILINESTRING,
-        'Polygon': Data.POLYGON,
-        'MultiPolygon': Data.MULTIPOLYGON,
-        'GeometryCollection': Data.GEOMETRYCOLLECTION
-    }[gt]
+    geometry.type = geometry_types[gt]
 
     if gt == 'GeometryCollection':
-        for single_geometry_json in geometry_json.get('geometries'):
-            encode_geometry(geometry.geometry_collection.geometries.add(), single_geometry_json, e)
+        for single_geom in geometry_json.get('geometries'):
+            encode_geometry(geometry.geometry_collection.geometries.add(), single_geom, e)
 
     elif gt == 'Point':
         add_point(geometry.line_string, coords, e)
@@ -56,6 +66,8 @@ def encode_geometry(geometry, geometry_json, e):
 
 
 def encode_properties(data, properties, props_json, keys, values):
+
+    if props_json is None: return
 
     for key, val in props_json.viewitems():
         if not (key in keys):
@@ -87,18 +99,78 @@ def encode_properties(data, properties, props_json, keys, values):
         properties.append(valueIndex)
 
 
+def encode_id(obj, id):
+    if id is not None:
+        if isinstance(id, int) and id >= 0: obj.uint_id = id
+        else: obj.id = id
+
+
 def encode_feature(data, feature, feature_json, e, keys, values):
-
-    if 'id' in feature_json:
-        id = feature_json['id']
-        if isinstance(id, int) and id >= 0: feature.uint_id = idts
-        else: feature.id = id
-
-    encode_geometry(feature.geometry, feature_json.get('geometry'), e)
+    encode_id(feature, feature_json.get('id'))
     encode_properties(data, feature.properties, feature_json.get('properties'), keys, values)
+    encode_geometry(feature.geometry, feature_json.get('geometry'), e)
 
 
-def encode(obj, precision=6, dim=2):
+def encode_topo_geometry(geometry, data, name, geometry_json, e, keys, values):
+    gt = geometry_json['type']
+    arcs = geometry_json.get('arcs')
+    coords = geometry_json.get('coordinates')
+
+    geometry.type = geometry_types[gt]
+
+    if name is not None: geometry.name = name
+
+    encode_id(geometry, geometry_json.get('id'))
+    encode_properties(data, geometry.properties, geometry_json.get('properties'), keys, values)
+
+    if gt == 'GeometryCollection':
+        for single_geom in geometry_json.get('geometries'):
+            encode_topo_geometry(geometry.geometry_collection.geometries.add(),
+                    data, None, single_geom, e, keys, values)
+
+    elif gt == 'Point':
+        add_point(geometry.line_string, coords, e)
+
+    elif gt == 'MultiPoint' or gt == 'LineString':
+        populate_arcs(geometry.line_string, arcs)
+
+    elif gt == 'MultiLineString' or gt == 'Polygon':
+        line_strings = geometry.multi_line_string.line_strings
+        for seq in arcs: populate_arcs(line_strings.add(), seq)
+
+    elif gt == 'MultiPolygon':
+        for polygons in arcs:
+            poly = geometry.multi_polygon.polygons.add()
+            for seq in polygons: populate_arcs(poly.line_strings.add(), seq)
+
+
+def encode_topology(data, data_json, e, keys, values):
+
+    data.is_topojson = True
+
+    transform_json = data_json.get('transform')
+
+    if transform_json:
+        scale_json = transform_json.get('scale')
+        translate_json = transform_json.get('translate')
+
+        transform = data.transform
+        transform.scale_x = scale_json[0]
+        transform.scale_y = scale_json[1]
+        transform.translate_x = translate_json[0]
+        transform.translate_y = translate_json[1]
+
+        e = 1 # if we have a transform, arc coords are already integers
+
+    for arc in data_json.get('arcs'): populate_line(data.arcs.add(), arc, e)
+
+    data.geometry.type = geometry_types['GeometryCollection']
+
+    for name, geom in data_json.get('objects').viewitems():
+        encode_topo_geometry(data.geometry.geometry_collection.geometries.add(), data, name, geom, e, keys, values)
+
+
+def encode(data_json, precision=6, dim=2):
 
     data = geobuf_pb2.Data()
 
@@ -109,16 +181,19 @@ def encode(obj, precision=6, dim=2):
     keys = collections.OrderedDict()
     values = collections.OrderedDict()
 
-    data_type = obj['type']
+    data_type = data_json['type']
 
     if data_type == 'FeatureCollection':
-        for feature_json in obj.get('features'):
+        for feature_json in data_json.get('features'):
             encode_feature(data, data.feature_collection.features.add(), feature_json, e, keys, values)
 
     elif data_type == 'Feature':
-        encode_feature(data, data.feature, obj, e, keys, values)
+        encode_feature(data, data.feature, data_json, e, keys, values)
 
-    else: encode_geometry(data.geometry, obj, e)
+    elif data_type == 'Topology':
+        encode_topology(data, data_json, e, keys, values)
+
+    else: encode_geometry(data.geometry, data_json, e)
 
     return data.SerializeToString();
 
