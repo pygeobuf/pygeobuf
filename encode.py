@@ -101,8 +101,8 @@ def encode_properties(data, properties, props_json, keys, values):
 
 def encode_id(obj, id):
     if id is not None:
-        if isinstance(id, int) and id >= 0: obj.uint_id = id
-        else: obj.id = id
+        if isinstance(id, int): obj.int_id = id
+        else: obj.id = str(id)
 
 
 def encode_feature(data, feature, feature_json, e, keys, values):

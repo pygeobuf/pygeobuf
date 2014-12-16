@@ -30,7 +30,7 @@ message Data {
 
         oneof id_type {
             string id = 3;
-            uint32 uint_id = 4;
+            sint32 int_id = 4;
         }
     }
 
@@ -48,7 +48,7 @@ message Data {
         repeated uint32 properties = 6 [packed = true];
         oneof id_type {
             string id = 7;
-            uint32 uint_id = 8;
+            sint32 int_id = 8;
         }
         optional string name = 9; // TopoJSON object name
     }

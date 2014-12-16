@@ -69,14 +69,17 @@ def decode_properties(data, properties):
     return obj
 
 
+def decode_id(obj, obj_json):
+    id_type = obj.WhichOneof('id_type')
+    if id_type == 'id': obj_json['id'] = obj.id
+    elif id_type == 'int_id': obj_json['id'] = obj.int_id
+
+
 def decode_feature(data, feature, dim, e):
     obj = collections.OrderedDict()
     obj['type'] = 'Feature'
 
-    id_type = feature.WhichOneof('id_type')
-    if id_type == 'id': obj['id'] = feature.id
-    elif id_type == 'uint_id': obj['id'] = feature.uint_id
-
+    decode_id(feature, obj)
     obj['geometry'] = decode_geometry(feature.geometry, dim, e)
     obj['properties'] = decode_properties(data, feature.properties)
 
