@@ -28,43 +28,6 @@ def populate_arcs(arc_string, indexes):
         i0 = i
 
 
-geometry_types = {
-    'Point': 0,
-    'MultiPoint': 1,
-    'LineString': 2,
-    'MultiLineString': 3,
-    'Polygon': 4,
-    'MultiPolygon': 5,
-    'GeometryCollection': 6
-}
-
-def encode_geometry(geometry, geometry_json, e):
-
-    gt = geometry_json['type']
-    coords = geometry_json.get('coordinates')
-
-    geometry.type = geometry_types[gt]
-
-    if gt == 'GeometryCollection':
-        for single_geom in geometry_json.get('geometries'):
-            encode_geometry(geometry.geometry_collection.geometries.add(), single_geom, e)
-
-    elif gt == 'Point':
-        add_point(geometry.line_string, coords, e)
-
-    elif gt == 'MultiPoint' or gt == 'LineString':
-        populate_line(geometry.line_string, coords, e)
-
-    elif gt == 'MultiLineString' or gt == 'Polygon':
-        line_strings = geometry.multi_line_string.line_strings
-        for seq in coords: populate_line(line_strings.add(), seq, e)
-
-    elif gt == 'MultiPolygon':
-        for polygons in coords:
-            poly = geometry.multi_polygon.polygons.add()
-            for seq in polygons: populate_line(poly.line_strings.add(), seq, e)
-
-
 def encode_properties(data, properties, props_json, keys, values):
 
     if props_json is None: return
@@ -105,10 +68,41 @@ def encode_id(obj, id):
         else: obj.id = str(id)
 
 
-def encode_feature(data, feature, feature_json, e, keys, values):
-    encode_id(feature, feature_json.get('id'))
-    encode_properties(data, feature.properties, feature_json.get('properties'), keys, values)
-    encode_geometry(feature.geometry, feature_json.get('geometry'), e)
+geometry_types = {
+    'Point': 0,
+    'MultiPoint': 1,
+    'LineString': 2,
+    'MultiLineString': 3,
+    'Polygon': 4,
+    'MultiPolygon': 5,
+    'GeometryCollection': 6
+}
+
+def encode_geometry(geometry, geometry_json, e):
+
+    gt = geometry_json['type']
+    coords = geometry_json.get('coordinates')
+
+    geometry.type = geometry_types[gt]
+
+    if gt == 'GeometryCollection':
+        for single_geom in geometry_json.get('geometries'):
+            encode_geometry(geometry.geometry_collection.geometries.add(), single_geom, e)
+
+    elif gt == 'Point':
+        add_point(geometry.line_string, coords, e)
+
+    elif gt == 'MultiPoint' or gt == 'LineString':
+        populate_line(geometry.line_string, coords, e)
+
+    elif gt == 'MultiLineString' or gt == 'Polygon':
+        line_strings = geometry.multi_line_string.line_strings
+        for seq in coords: populate_line(line_strings.add(), seq, e)
+
+    elif gt == 'MultiPolygon':
+        for polygons in coords:
+            poly = geometry.multi_polygon.polygons.add()
+            for seq in polygons: populate_line(poly.line_strings.add(), seq, e)
 
 
 def encode_topo_geometry(geometry, data, name, geometry_json, e, keys, values):
@@ -145,6 +139,12 @@ def encode_topo_geometry(geometry, data, name, geometry_json, e, keys, values):
         for polygons in arcs:
             poly = geometry.multi_polygon.polygons.add()
             for seq in polygons: populate_arcs(poly.line_strings.add(), seq)
+
+
+def encode_feature(data, feature, feature_json, e, keys, values):
+    encode_id(feature, feature_json.get('id'))
+    encode_properties(data, feature.properties, feature_json.get('properties'), keys, values)
+    encode_geometry(feature.geometry, feature_json.get('geometry'), e)
 
 
 def encode_topology(data, data_json, e, keys, values):

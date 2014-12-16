@@ -35,6 +35,28 @@ def decode_arcs(line):
     return obj
 
 
+def decode_properties(data, properties):
+    obj = {}
+    for i, prop in enumerate(properties):
+        if i % 2 == 0:
+            key = data.keys[properties[i]]
+            val = data.values[properties[i + 1]]
+
+            value_type = val.WhichOneof('value_type')
+            if value_type == 'string_value': obj[key] = val.string_value
+            elif value_type == 'double_value': obj[key] = val.double_value
+            elif value_type == 'int_value': obj[key] = val.int_value
+            elif value_type == 'bool_value': obj[key] = val.bool_value
+            elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
+    return obj
+
+
+def decode_id(obj, obj_json):
+    id_type = obj.WhichOneof('id_type')
+    if id_type == 'id': obj_json['id'] = obj.id
+    elif id_type == 'int_id': obj_json['id'] = obj.int_id
+
+
 geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString',
                   'Polygon', 'MultiPolygon', 'GeometryCollection')
 
@@ -59,39 +81,6 @@ def decode_geometry(geometry, dim, e):
         obj['coordinates'] = []
         for polygon in geometry.multi_polygon.polygons:
             obj['coordinates'].append([decode_line(line, dim, e) for line in polygon.line_strings])
-
-    return obj
-
-
-def decode_properties(data, properties):
-    obj = {}
-    for i, prop in enumerate(properties):
-        if i % 2 == 0:
-            key = data.keys[properties[i]]
-            val = data.values[properties[i + 1]]
-
-            value_type = val.WhichOneof('value_type')
-            if value_type == 'string_value': obj[key] = val.string_value
-            elif value_type == 'double_value': obj[key] = val.double_value
-            elif value_type == 'int_value': obj[key] = val.int_value
-            elif value_type == 'bool_value': obj[key] = val.bool_value
-            elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
-    return obj
-
-
-def decode_id(obj, obj_json):
-    id_type = obj.WhichOneof('id_type')
-    if id_type == 'id': obj_json['id'] = obj.id
-    elif id_type == 'int_id': obj_json['id'] = obj.int_id
-
-
-def decode_feature(data, feature, dim, e):
-    obj = collections.OrderedDict()
-    obj['type'] = 'Feature'
-
-    decode_id(feature, obj)
-    obj['geometry'] = decode_geometry(feature.geometry, dim, e)
-    if feature.properties: obj['properties'] = decode_properties(data, feature.properties)
 
     return obj
 
@@ -123,6 +112,17 @@ def decode_topo_geometry(geometry, data, dim, e):
             obj['arcs'].append([decode_arcs(line) for line in polygon.line_strings])
 
     if geometry.properties: obj['properties'] = decode_properties(data, geometry.properties)
+
+    return obj
+
+
+def decode_feature(data, feature, dim, e):
+    obj = collections.OrderedDict()
+    obj['type'] = 'Feature'
+
+    decode_id(feature, obj)
+    obj['geometry'] = decode_geometry(feature.geometry, dim, e)
+    if feature.properties: obj['properties'] = decode_properties(data, feature.properties)
 
     return obj
 
