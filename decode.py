@@ -8,12 +8,13 @@ import collections
 
 
 def decode_point(line, dim, e):
+    if e == 1: return line
     return [float(x) / e for x in line]
 
 
 def decode_line(line, dim, e):
     obj = []
-    coords = line.coords
+    coords = line.values
     r = range(dim)
     p0 = [0 for i in r]
 
@@ -25,31 +26,12 @@ def decode_line(line, dim, e):
     return obj
 
 
-geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString',
-                  'Polygon', 'MultiPolygon', 'GeometryCollection')
-
-def decode_geometry(geometry, dim, e):
-    obj = {}
-    gt = obj['type'] = geometry_types[geometry.type]
-
-    if gt == 'GeometryCollection':
-        obj['geometries'] = [decode_geometry(geom, dim, e) for geom in geometry.geometry_collection.geometries]
-
-    elif gt == 'Point':
-        obj['coordinates'] = decode_point(geometry.line_string.coords, dim, e)
-
-    elif gt == 'MultiPoint' or gt == 'LineString':
-        obj['coordinates'] = decode_line(geometry.line_string, dim, e)
-
-    elif (gt == 'MultiLineString') or (gt == 'Polygon'):
-        line_strings = geometry.multi_line_string.line_strings
-        obj['coordinates'] = [decode_line(line, dim, e) for line in line_strings]
-
-    elif gt == 'MultiPolygon':
-        obj['coordinates'] = []
-        for polygon in geometry.multi_polygon.polygons:
-            obj['coordinates'].append([decode_line(line, dim, e) for line in polygon.line_strings])
-
+def decode_arcs(line):
+    obj = []
+    i0 = 0
+    for i in line.values:
+        obj.append(i0 + i)
+        i0 += i
     return obj
 
 
@@ -69,16 +51,100 @@ def decode_properties(data, properties):
     return obj
 
 
+def decode_id(obj, obj_json):
+    id_type = obj.WhichOneof('id_type')
+    if id_type == 'id': obj_json['id'] = obj.id
+    elif id_type == 'int_id': obj_json['id'] = obj.int_id
+
+
+geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString',
+                  'Polygon', 'MultiPolygon', 'GeometryCollection')
+
+def decode_geometry(geometry, dim, e):
+    obj = {}
+    gt = obj['type'] = geometry_types[geometry.type]
+
+    if gt == 'GeometryCollection':
+        obj['geometries'] = [decode_geometry(geom, dim, e) for geom in geometry.geometry_collection.geometries]
+
+    elif gt == 'Point':
+        obj['coordinates'] = decode_point(geometry.line_string.values, dim, e)
+
+    elif gt == 'MultiPoint' or gt == 'LineString':
+        obj['coordinates'] = decode_line(geometry.line_string, dim, e)
+
+    elif (gt == 'MultiLineString') or (gt == 'Polygon'):
+        line_strings = geometry.multi_line_string.line_strings
+        obj['coordinates'] = [decode_line(line, dim, e) for line in line_strings]
+
+    elif gt == 'MultiPolygon':
+        obj['coordinates'] = []
+        for polygon in geometry.multi_polygon.polygons:
+            obj['coordinates'].append([decode_line(line, dim, e) for line in polygon.line_strings])
+
+    return obj
+
+
+def decode_topo_geometry(geometry, data, dim, e):
+    obj = collections.OrderedDict()
+    gt = obj['type'] = geometry_types[geometry.type]
+
+    decode_id(geometry, obj)
+
+    if gt == 'GeometryCollection':
+        obj['geometries'] = [decode_topo_geometry(g, data, dim, e) for g in geometry.geometry_collection.geometries]
+
+    elif gt == 'Point':
+        obj['coordinates'] = decode_point(geometry.line_string.values, dim, e)
+
+    elif gt == 'MultiPoint':
+        obj['coordinates'] = decode_line(geometry.line_string, dim, e)
+
+    elif gt == 'LineString':
+        obj['arcs'] = decode_arcs(geometry.line_string)
+
+    elif (gt == 'MultiLineString') or (gt == 'Polygon'):
+        obj['arcs'] = [decode_arcs(line) for line in geometry.multi_line_string.line_strings]
+
+    elif gt == 'MultiPolygon':
+        obj['arcs'] = []
+        for polygon in geometry.multi_polygon.polygons:
+            obj['arcs'].append([decode_arcs(line) for line in polygon.line_strings])
+
+    if geometry.properties: obj['properties'] = decode_properties(data, geometry.properties)
+
+    return obj
+
+
 def decode_feature(data, feature, dim, e):
     obj = collections.OrderedDict()
     obj['type'] = 'Feature'
 
-    id_type = feature.WhichOneof('id_type')
-    if id_type == 'id': obj['id'] = feature.id
-    elif id_type == 'uint_id': obj['id'] = feature.uint_id
-
+    decode_id(feature, obj)
     obj['geometry'] = decode_geometry(feature.geometry, dim, e)
-    obj['properties'] = decode_properties(data, feature.properties)
+    if feature.properties: obj['properties'] = decode_properties(data, feature.properties)
+
+    return obj
+
+
+def decode_topology(data, dim, e):
+    obj = collections.OrderedDict()
+
+    obj['type'] = 'Topology'
+
+    tr = data.transform
+    if tr:
+        obj['transform'] = {
+            'scale': [tr.scale_x, tr.scale_y],
+            'translate': [tr.translate_x, tr.translate_y]
+        }
+        e = 1
+
+    objects = obj['objects'] = {}
+    for geom in data.geometry.geometry_collection.geometries:
+        objects[geom.name] = decode_topo_geometry(geom, data, dim, e)
+
+    obj['arcs'] = [decode_line(arc, dim, e) for arc in data.arcs]
 
     return obj
 
@@ -91,21 +157,18 @@ def decode(data_str):
     e = pow(10, data.precision)
     dim = data.dimensions
 
+    if data.is_topojson: return decode_topology(data, dim, e)
+
     data_type = data.WhichOneof('data_type')
 
     if data_type == 'feature_collection':
-        obj = {'type': 'FeatureCollection'}
-        features = obj['features'] = []
+        obj = {'type': 'FeatureCollection', 'features': []}
         for feature in data.feature_collection.features:
-            features.append(decode_feature(data, feature, dim, e))
+            obj['features'].append(decode_feature(data, feature, dim, e))
+        return obj
 
-    elif data_type == 'feature':
-        obj = decode_feature(data, data.feature, dim, e)
-
-    elif data_type == 'geometry':
-        obj = decode_geometry(data.geometry, dim, e)
-
-    return obj
+    elif data_type == 'feature': return decode_feature(data, data.feature, dim, e)
+    elif data_type == 'geometry': return decode_geometry(data.geometry, dim, e)
 
 
 if __name__ == "__main__":
