@@ -8,16 +8,20 @@ message Data {
         Geometry geometry = 3;
     }
 
+    // global arrays of unique keys & values
     repeated string keys = 4;
     repeated Value values = 5;
 
     optional uint32 dimensions = 6 [default = 2];
+
+    // number of digits after decimal point for coordinates
     optional uint32 precision = 7 [default = 6];
 
 
     message Feature {
         required Geometry geometry = 1;
 
+        // pairs of key/value indexes
         repeated uint32 properties = 2 [packed = true];
 
         oneof id_type {
@@ -44,7 +48,8 @@ message Data {
         repeated Geometry geometries = 1;
     }
 
-    message LineString { // delta-encoded int coordinates
+    message LineString {
+        // delta-encoded integer values
         repeated sint32 coords = 1 [packed = true];
     }
     message MultiLineString {
