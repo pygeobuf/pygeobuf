@@ -1,8 +1,8 @@
 ## pygeobuf
 
-Reference encoding/decoding Python implementation of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), our compact geospatial format (essentially a binary form of GeoJSON).
+Reference encoding/decoding implementation (in Python) of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), a compact geospatial format (essentially a binary form of GeoJSON).
 
-The format is designed to be able to store any GeoJSON data losslessly.
+The format is designed to be able to store any GeoJSON or TopoJSON data losslessly.
 
 ### Usage
 
@@ -18,8 +18,8 @@ As a module:
 ```python
 import geobuf
 
-pbf = geobuf.encode(geojson) # GeoJSON -> Geobuf string
-geojson = geobuf.decode(pbf) # Geobuf string -> GeoJSON
+pbf = geobuf.encode(my_json) # GeoJSON or TopoJSON -> Geobuf string
+my_json = geobuf.decode(pbf) # Geobuf string -> GeoJSON or TopoJSON
 ```
 
 Both `encode.py` and `geobuf.encode` accept two optional arguments:
