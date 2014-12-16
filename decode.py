@@ -101,10 +101,12 @@ def decode_topo_geometry(geometry, data, dim, e):
         obj['coordinates'] = decode_line(geometry.line_string, dim, e)
 
     elif gt == 'LineString':
-        obj['arcs'] = decode_arcs(geometry.line_string)
+        if len(geometry.line_string.values) == 0: obj['arcs'] = [geometry.arc_index]
+        else: obj['arcs'] = decode_arcs(geometry.line_string)
 
     elif (gt == 'MultiLineString') or (gt == 'Polygon'):
-        obj['arcs'] = [decode_arcs(line) for line in geometry.multi_line_string.line_strings]
+        if len(geometry.multi_line_string.line_strings) == 0: obj['arcs'] = [[geometry.arc_index]]
+        else: obj['arcs'] = [decode_arcs(line) for line in geometry.multi_line_string.line_strings]
 
     elif gt == 'MultiPolygon':
         obj['arcs'] = []

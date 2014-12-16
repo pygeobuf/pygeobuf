@@ -129,11 +129,14 @@ def encode_topo_geometry(geometry, data, name, geometry_json, e, keys, values):
         populate_line(geometry.line_string, coords, e)
 
     elif gt == 'LineString':
-        populate_arcs(geometry.line_string, arcs)
+        if len(arcs) == 1: geometry.arc_index = arcs[0]
+        else: populate_arcs(geometry.line_string, arcs)
 
     elif gt == 'MultiLineString' or gt == 'Polygon':
-        line_strings = geometry.multi_line_string.line_strings
-        for seq in arcs: populate_arcs(line_strings.add(), seq)
+        if len(arcs) == 1 and len(arcs[0]) == 1: geometry.arc_index = arcs[0][0]
+        else:
+            line_strings = geometry.multi_line_string.line_strings
+            for seq in arcs: populate_arcs(line_strings.add(), seq)
 
     elif gt == 'MultiPolygon':
         for polygons in arcs:
