@@ -13,7 +13,7 @@ def decode_point(line, dim, e):
 
 def decode_line(line, dim, e):
     obj = []
-    coords = line.coords
+    coords = line.values
     r = range(dim)
     p0 = [0 for i in r]
 
@@ -36,7 +36,7 @@ def decode_geometry(geometry, dim, e):
         obj['geometries'] = [decode_geometry(geom, dim, e) for geom in geometry.geometry_collection.geometries]
 
     elif gt == 'Point':
-        obj['coordinates'] = decode_point(geometry.line_string.coords, dim, e)
+        obj['coordinates'] = decode_point(geometry.line_string.values, dim, e)
 
     elif gt == 'MultiPoint' or gt == 'LineString':
         obj['coordinates'] = decode_line(geometry.line_string, dim, e)

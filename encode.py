@@ -8,7 +8,7 @@ import collections
 
 
 def add_point(line, point, e):
-    for x in point: line.coords.append(int(round(x * e)))
+    for x in point: line.values.append(int(round(x * e)))
 
 
 def populate_line(line, seq, e):
