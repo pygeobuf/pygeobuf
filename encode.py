@@ -166,7 +166,9 @@ def encode_topology(data, data_json, e, keys, values):
 
         e = 1 # if we have a transform, arc coords are already integers
 
-    for arc in data_json.get('arcs'): populate_line(data.arcs.add(), arc, e)
+    for arc in data_json.get('arcs'):
+        line = data.arcs.add()
+        for p in arc: add_point(line, p, e)
 
     data.geometry.type = geometry_types['GeometryCollection']
 
