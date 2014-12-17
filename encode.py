@@ -168,7 +168,9 @@ def encode_topology(data, data_json, e, keys, values):
 
     for arc in data_json.get('arcs'):
         line = data.arcs.add()
-        for p in arc: add_point(line, p, e)
+        # encode first point as is and delta-encode the rest
+        add_point(line, arc[0], e)
+        populate_line(line, arc[1:], e)
 
     data.geometry.type = geometry_types['GeometryCollection']
 

@@ -12,13 +12,13 @@ def decode_point(line, dim, e):
     return [float(x) / e for x in line]
 
 
-def decode_line(line, dim, e):
+def decode_line(line, dim, e, k=0):
     obj = []
     coords = line.values
     r = range(dim)
     p0 = [0 for i in r]
 
-    for i in xrange(0, len(coords), dim):
+    for i in xrange(k * dim, len(coords), dim):
         p = [p0[j] + coords[i + j] for j in r]
         obj.append(decode_point(p, dim, e))
         p0 = p
@@ -146,7 +146,7 @@ def decode_topology(data, dim, e):
     for geom in data.geometry.geometry_collection.geometries:
         objects[geom.name] = decode_topo_geometry(geom, data, dim, e)
 
-    obj['arcs'] = [decode_line(arc, dim, e) for arc in data.arcs]
+    obj['arcs'] = [[decode_point(arc.values[0:dim], dim, e)] + decode_line(arc, dim, e, 1) for arc in data.arcs]
 
     return obj
 
