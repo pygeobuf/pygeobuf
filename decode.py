@@ -146,7 +146,9 @@ def decode_topology(data, dim, e):
     for geom in data.geometry.geometry_collection.geometries:
         objects[geom.name] = decode_topo_geometry(geom, data, dim, e)
 
-    obj['arcs'] = [[decode_point(arc.values[0:dim], dim, e)] + decode_line(arc, dim, e, 1) for arc in data.arcs]
+    obj['arcs'] = []
+    for arc in data.arcs:
+        obj['arcs'].append([decode_point(arc.values[i:i + dim], dim, e) for i in xrange(0, len(arc.values), dim)])
 
     return obj
 
