@@ -59,11 +59,13 @@ class Decoder:
             }
             self.transformed = True
 
-        objects = obj['objects'] = {}
+        obj['objects'] = {}
         for geom in data.geometry.geometry_collection.geometries:
-            objects[geom.name] = self.decode_topo_geometry(geom)
+            obj['objects'][geom.name] = self.decode_topo_geometry(geom)
 
-        obj['arcs'] = [[self.decode_point(arc.values[0:self.dim])] + self.decode_line(arc, 1) for arc in data.arcs]
+        obj['arcs'] = []
+        for arc in data.arcs: obj['arcs'].append(
+            [self.decode_point(arc.values[i:i + self.dim]) for i in xrange(0, len(arc.values), self.dim)])
 
         return obj
 

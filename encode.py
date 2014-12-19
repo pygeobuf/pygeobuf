@@ -72,9 +72,7 @@ class Encoder:
 
         for arc in data_json.get('arcs'):
             line = data.arcs.add()
-            # encode first point as is and delta-encode the rest
-            self.add_point(line, arc[0])
-            self.populate_line(line, arc[1:])
+            for p in arc: self.add_point(line, p)
 
         data.geometry.type = self.geometry_types['GeometryCollection']
 
