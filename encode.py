@@ -124,7 +124,6 @@ class Encoder:
         if props_json is None: return
 
         keys = self.keys
-        values = collections.OrderedDict()
         data = self.data
 
         for key, val in props_json.viewitems():
@@ -135,26 +134,20 @@ class Encoder:
             else:
                 keyIndex = keys.keys().index(key)
 
-            value_is_json = isinstance(val, dict) or isinstance(val, list)
-            if value_is_json: val = json.dumps(val, separators=(',',':'))
+            value = obj.values.add()
 
-            if not (val in values):
-                values[val] = True
-                value = obj.values.add()
-                valueIndex = len(obj.values) - 1
+            if isinstance(val, dict) or isinstance(val, list):
+                value.json_value = json.dumps(val, separators=(',',':'))
 
-                if value_is_json: value.json_value = val
-                elif isinstance(val, unicode): value.string_value = val
-                elif isinstance(val, float):
-                    if val.is_integer(): value.int_value = int(val)
-                    else: value.double_value = val
-                elif isinstance(val, int) or isinstance(val, long): value.int_value = val
-                elif isinstance(val, bool): value.bool_value = val
-            else:
-                valueIndex = values.keys().index(val)
+            elif isinstance(val, unicode): value.string_value = val
+            elif isinstance(val, float):
+                if val.is_integer(): value.int_value = int(val)
+                else: value.double_value = val
+            elif isinstance(val, int) or isinstance(val, long): value.int_value = val
+            elif isinstance(val, bool): value.bool_value = val
 
             obj.properties.append(keyIndex)
-            obj.properties.append(valueIndex)
+            obj.properties.append(len(obj.values) - 1)
 
 
     def encode_id(self, obj, id):
