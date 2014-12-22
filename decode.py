@@ -21,8 +21,9 @@ class Decoder:
         self.e = pow(10, data.precision)
         self.dim = data.dimensions
         self.transformed = False
+        self.is_topo = len(data.arc_coords) > 0
 
-        if len(data.arcs) > 0: return self.decode_topology(data)
+        if self.is_topo: return self.decode_topology(data)
 
         data_type = data.WhichOneof('data_type')
 
@@ -61,11 +62,14 @@ class Decoder:
 
         obj['objects'] = {}
         for geom in data.geometry.geometry_collection.geometries:
-            obj['objects'][geom.name] = self.decode_topo_geometry(geom)
+            obj['objects'][geom.name] = self.decode_geometry(geom)
 
         obj['arcs'] = []
-        for arc in data.arcs: obj['arcs'].append(
-            [self.decode_point(arc.values[i:i + self.dim]) for i in xrange(0, len(arc.values), self.dim)])
+        i = 0
+        for l in data.arc_lengths:
+            obj['arcs'].append([self.decode_point(data.arc_coords[j:j + self.dim])
+                    for j in xrange(i, i + l * self.dim, self.dim)])
+            i += l * self.dim
 
         return obj
 
@@ -93,89 +97,96 @@ class Decoder:
 
 
     def decode_geometry(self, geometry):
-        obj = {}
+        obj = collections.OrderedDict()
         gt = obj['type'] = self.geometry_types[geometry.type]
+        coords_or_arcs = 'coordinates'
+
+        if self.is_topo:
+            self.decode_id(geometry, obj)
+            if len(geometry.properties): obj['properties'] = self.decode_properties(geometry.properties)
+            coords_or_arcs = 'arcs'
 
         if gt == 'GeometryCollection':
             obj['geometries'] = [self.decode_geometry(geom) for geom in geometry.geometry_collection.geometries]
 
         elif gt == 'Point':
-            obj['coordinates'] = self.decode_point(geometry.line_string.values)
-
-        elif gt == 'MultiPoint' or gt == 'LineString':
-            obj['coordinates'] = self.decode_line(geometry.line_string)
-
-        elif (gt == 'MultiLineString') or (gt == 'Polygon'):
-            line_strings = geometry.multi_line_string.line_strings
-            obj['coordinates'] = [self.decode_line(line) for line in line_strings]
-
-        elif gt == 'MultiPolygon':
-            obj['coordinates'] = []
-            for polygon in geometry.multi_polygon.polygons:
-                obj['coordinates'].append([self.decode_line(line) for line in polygon.line_strings])
-
-        return obj
-
-
-    def decode_topo_geometry(self, geometry):
-        obj = collections.OrderedDict()
-        gt = obj['type'] = self.geometry_types[geometry.type]
-
-        self.decode_id(geometry, obj)
-
-        if gt == 'GeometryCollection':
-            obj['geometries'] = [self.decode_topo_geometry(g) for g in geometry.geometry_collection.geometries]
-
-        elif gt == 'Point':
-            obj['coordinates'] = self.decode_point(geometry.line_string.values)
+            obj['coordinates'] = self.decode_point(geometry.coords)
 
         elif gt == 'MultiPoint':
-            obj['coordinates'] = self.decode_line(geometry.line_string)
+            obj['coordinates'] = self.decode_line(geometry.coords, True)
 
         elif gt == 'LineString':
-            if len(geometry.line_string.values) == 0: obj['arcs'] = [geometry.arc_index]
-            else: obj['arcs'] = self.decode_arcs(geometry.line_string)
+            obj[coords_or_arcs] = self.decode_line(geometry.coords)
 
         elif (gt == 'MultiLineString') or (gt == 'Polygon'):
-            if len(geometry.multi_line_string.line_strings) == 0: obj['arcs'] = [[geometry.arc_index]]
-            else: obj['arcs'] = [self.decode_arcs(line) for line in geometry.multi_line_string.line_strings]
+            obj[coords_or_arcs] = self.decode_multi_line(geometry)
 
-        elif gt == 'MultiPolygon':
-            obj['arcs'] = []
-            for polygon in geometry.multi_polygon.polygons:
-                obj['arcs'].append([self.decode_arcs(line) for line in polygon.line_strings])
-
-        if geometry.properties: obj['properties'] = self.decode_properties(geometry.properties)
+        elif gt == 'MultiPolygon': obj[coords_or_arcs] = self.decode_multi_polygon(geometry)
 
         return obj
 
+
+    def decode_coord(self, coord):
+        return coord if self.transformed else float(coord) / self.e
 
     def decode_point(self, coords):
-        if self.transformed: return coords # TopoJSON with transform
-        return [float(x) / self.e for x in coords]
+        return [self.decode_coord(x) for x in coords]
 
-
-    def decode_line(self, line, k=0):
+    def decode_line(self, coords, is_multi_point=False):
         obj = []
-        coords = line.values
-        dim = self.dim
-        r = range(dim)
-        p0 = [0 for i in r]
 
-        for i in xrange(k * dim, len(coords), dim):
-            p = [p0[j] + coords[i + j] for j in r]
-            obj.append(self.decode_point(p))
-            p0 = p
+        if self.is_topo and not is_multi_point:
+            i0 = 0
+            for i in coords:
+                obj.append(i0 + i)
+                i0 += i
+        else:
+            d = self.dim
+            r = range(d)
+            r2 = xrange(0, len(coords), d)
+            p0 = [0 for i in r]
+            for i in r2:
+                p = [p0[j] + coords[i + j] for j in r]
+                obj.append(self.decode_point(p))
+                p0 = p
 
         return obj
 
 
-    def decode_arcs(self, line):
+    def decode_multi_line(self, geometry):
+        if len(geometry.lengths) == 0:
+            return [self.decode_line(geometry.coords)]
+
         obj = []
-        i0 = 0
-        for i in line.values:
-            obj.append(i0 + i)
-            i0 += i
+        i = 0
+        d = 1 if self.is_topo else self.dim
+
+        for l in geometry.lengths:
+            obj.append(self.decode_line(geometry.coords[i:i + l * d]))
+            i += l * d
+
+        return obj
+
+
+    def decode_multi_polygon(self, geometry):
+        if len(geometry.lengths) == 0:
+            return [[self.decode_line(geometry.coords)]]
+
+        obj = []
+        i = 0
+        num_polygons = geometry.lengths[0]
+        j = 1
+        d = 1 if self.is_topo else self.dim
+
+        for n in range(num_polygons): # for every polygon
+            num_rings = geometry.lengths[j]
+            j += 1
+            rings = []
+            for l in geometry.lengths[j:j + num_rings]:
+                rings.append(self.decode_line(geometry.coords[i:i + l * d]))
+                j += 1
+                i += l * d
+            obj.append(rings)
         return obj
 
 
