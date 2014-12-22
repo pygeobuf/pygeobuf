@@ -12,14 +12,15 @@ message Data {
     repeated string keys = 4;
     repeated Value values = 5;
 
-    optional uint32 dimensions = 6 [default = 2];
+    optional uint32 dimensions = 6 [default = 2]; // max coordinate dimensions
 
     // number of digits after decimal point for coordinates
     optional uint32 precision = 7 [default = 6];
 
     // TopoJSON stuff
     optional Transform transform = 8;
-    repeated LineString arcs = 9;
+    repeated sint32 arc_coords = 9 [packed = true];
+    repeated uint32 arc_lengths = 10 [packed = true];
 
     message Feature {
         required Geometry geometry = 1;
@@ -36,40 +37,24 @@ message Data {
     message Geometry {
         required Type type = 1;
 
-        oneof coord_type {
-            LineString line_string = 2; // Point, MultiPoint, LineString
-            MultiLineString multi_line_string = 3; // Polygon, MultiLineString
-            MultiPolygon multi_polygon = 4; // MultiPolygon
-            GeometryCollection geometry_collection = 5; // GeometryCollection
-            sint32 arc_index = 6; // singe TopoJSON arc
-        }
-
         // TopoJSON has props/id in Geometry rather than Feature
-        repeated uint32 properties = 7 [packed = true];
+        repeated uint32 properties = 2 [packed = true];
+
         oneof id_type {
-            string id = 8;
-            sint32 int_id = 9;
+            string id = 3;
+            sint32 int_id = 4;
         }
-        optional string name = 10; // TopoJSON object name
+
+        repeated sint32 coords = 5 [packed = true]; // delta-encoded integer values
+        repeated uint32 lengths = 6 [packed = true]; // coordinate structure in lengths
+
+        optional GeometryCollection geometry_collection = 7;
+
+        optional string name = 8; // TopoJSON object name
     }
 
-    message FeatureCollection {
-        repeated Feature features = 1;
-    }
-    message GeometryCollection {
-        repeated Geometry geometries = 1;
-    }
-
-    message LineString {
-        // delta-encoded integer values
-        repeated sint32 values = 1 [packed = true];
-    }
-    message MultiLineString {
-        repeated LineString line_strings = 1;
-    }
-    message MultiPolygon {
-        repeated MultiLineString polygons = 1;
-    }
+    message FeatureCollection { repeated Feature features = 1; }
+    message GeometryCollection { repeated Geometry geometries = 1; }
 
     enum Type {
         POINT = 0;
@@ -84,12 +69,11 @@ message Data {
     message Value {
         oneof value_type {
             string string_value = 1;
-            float float_value = 2;
-            double double_value = 3;
-            sint32 int_value = 4;
-            uint32 uint_value = 5;
-            bool bool_value = 6;
-            string json_value = 7;
+            double double_value = 2;
+            sint32 int_value = 3;
+            uint32 uint_value = 4;
+            bool bool_value = 5;
+            string json_value = 6;
         }
     }
 

@@ -5,6 +5,7 @@ import sys
 import json
 import geobuf_pb2
 import collections
+# import google.protobuf.text_format as tf
 
 
 class Encoder:
@@ -30,6 +31,7 @@ class Encoder:
         self.keys = collections.OrderedDict()
         self.values = collections.OrderedDict()
         self.transformed = False
+        self.is_topo = False
 
         data_type = obj['type']
 
@@ -41,9 +43,12 @@ class Encoder:
             self.encode_feature(data.feature, obj)
 
         elif data_type == 'Topology':
+            self.is_topo = True
             self.encode_topology(data, obj)
 
         else: self.encode_geometry(data.geometry, obj)
+
+        # print tf.MessageToString(data)
 
         return data.SerializeToString()
 
@@ -70,79 +75,49 @@ class Encoder:
 
             self.transformed = True
 
-        for arc in data_json.get('arcs'):
-            line = data.arcs.add()
-            for p in arc: self.add_point(line, p)
+        arcs = data_json.get('arcs')
+        for arc in arcs: data.arc_lengths.append(len(arc))
+        for arc in arcs:
+            for p in arc: self.add_point(data.arc_coords, p)
 
         data.geometry.type = self.geometry_types['GeometryCollection']
 
         for name, geom in data_json.get('objects').viewitems():
-            self.encode_topo_geometry(data.geometry.geometry_collection.geometries.add(), name, geom)
+            self.encode_geometry(data.geometry.geometry_collection.geometries.add(), geom, name)
 
 
-    def encode_geometry(self, geometry, geometry_json):
+    def encode_geometry(self, geometry, geometry_json, name=None):
 
         gt = geometry_json['type']
         coords = geometry_json.get('coordinates')
+        coords_or_arcs = coords
 
         geometry.type = self.geometry_types[gt]
 
-        if gt == 'GeometryCollection':
-            for single_geom in geometry_json.get('geometries'):
-                self.encode_geometry(geometry.geometry_collection.geometries.add(), single_geom)
-
-        elif gt == 'Point':
-            self.add_point(geometry.line_string, coords)
-
-        elif gt == 'MultiPoint' or gt == 'LineString':
-            self.populate_line(geometry.line_string, coords)
-
-        elif gt == 'MultiLineString' or gt == 'Polygon':
-            line_strings = geometry.multi_line_string.line_strings
-            for seq in coords: self.populate_line(line_strings.add(), seq)
-
-        elif gt == 'MultiPolygon':
-            for polygons in coords:
-                poly = geometry.multi_polygon.polygons.add()
-                for seq in polygons: self.populate_line(poly.line_strings.add(), seq)
-
-
-    def encode_topo_geometry(self, geometry, name, geometry_json):
-        gt = geometry_json['type']
-        arcs = geometry_json.get('arcs')
-        coords = geometry_json.get('coordinates')
-
-        geometry.type = self.geometry_types[gt]
-
-        if name is not None: geometry.name = name
-
-        self.encode_id(geometry, geometry_json.get('id'))
-        self.encode_properties(geometry.properties, geometry_json.get('properties'))
+        if self.is_topo:
+            if name is not None: geometry.name = name
+            coords_or_arcs = geometry_json.get('arcs')
+            self.encode_id(geometry, geometry_json.get('id'))
+            self.encode_properties(geometry.properties, geometry_json.get('properties'))
 
         if gt == 'GeometryCollection':
-            for geom in geometry_json.get('geometries'):
-                self.encode_topo_geometry(geometry.geometry_collection.geometries.add(), None, geom)
+            geometries = geometry.geometry_collection.geometries
+            for geom in geometry_json.get('geometries'): self.encode_geometry(geometries.add(), geom)
 
         elif gt == 'Point':
-            self.add_point(geometry.line_string, coords)
+            self.add_point(geometry.coords, coords)
 
         elif gt == 'MultiPoint':
-            self.populate_line(geometry.line_string, coords)
+            self.add_line(geometry.coords, coords, True)
 
         elif gt == 'LineString':
-            if len(arcs) == 1: geometry.arc_index = arcs[0]
-            else: self.populate_arcs(geometry.line_string, arcs)
+            self.add_line(geometry.coords, coords_or_arcs)
 
         elif gt == 'MultiLineString' or gt == 'Polygon':
-            if len(arcs) == 1 and len(arcs[0]) == 1: geometry.arc_index = arcs[0][0]
-            else:
-                line_strings = geometry.multi_line_string.line_strings
-                for seq in arcs: self.populate_arcs(line_strings.add(), seq)
+            self.add_multi_line(geometry, coords_or_arcs)
 
         elif gt == 'MultiPolygon':
-            for polygons in arcs:
-                poly = geometry.multi_polygon.polygons.add()
-                for seq in polygons: self.populate_arcs(poly.line_strings.add(), seq)
+            self.add_multi_polygon(geometry, coords_or_arcs)
 
 
     def encode_properties(self, properties, props_json):
@@ -189,27 +164,37 @@ class Encoder:
             else: obj.id = str(id)
 
 
-    def add_point(self, line, point):
-        if self.transformed: line.values.extend(point) # transformed TopoJSON coords
-        else:
-            for x in point: line.values.append(int(round(x * self.e)))
+    def add_coord(self, coords, coord):
+        coords.append(coord if self.transformed else int(round(coord * self.e)))
+
+    def add_point(self, coords, point):
+        for x in point: self.add_coord(coords, x)
+
+    def add_line(self, coords, points, is_multi_point=False):
+        r = range(self.dim)
+        for i, p in enumerate(points):
+            if self.is_topo and not is_multi_point: # delta-encode arc indexes
+                coords.append(p - (points[i - 1] if i else 0))
+            else: # delta-encode coordinates
+                for j in r: self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
 
 
-    def populate_line(self, line, seq):
-        p0 = [0 for i in seq[0]]
-        r = range(len(p0))
-        for p in seq:
-            # delta-encode coordinates
-            self.add_point(line, [p[i] - p0[i] for i in r])
-            p0 = p
+    def add_multi_line(self, geometry, lines):
+        if len(lines) != 1:
+            for points in lines: geometry.lengths.append(len(points))
+
+        for points in lines: self.add_line(geometry.coords, points)
 
 
-    def populate_arcs(self, arc_string, indexes):
-        i0 = 0
-        for i in indexes:
-            # delta-encode arc indexes
-            arc_string.values.append(i - i0)
-            i0 = i
+    def add_multi_polygon(self, geometry, polygons):
+        if len(polygons) != 1 or len(polygons[0]) != 1 or len(polygons[0][0]) != 1:
+            geometry.lengths.append(len(polygons))
+            for rings in polygons:
+                geometry.lengths.append(len(rings))
+                for points in rings: geometry.lengths.append(len(points))
+
+        for rings in polygons:
+            for points in rings: self.add_line(geometry.coords, points)
 
 
 if __name__ == '__main__':
