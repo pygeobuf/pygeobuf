@@ -7,13 +7,13 @@ Reference encoding/decoding implementation (in Python) of the [new revision](htt
                     | normal    | gzipped
 ------------------- | --------- | --------
 us-zips.json 	    | 101.85 MB | 26.67 MB
-us-zips.pbf         | 12.43 MB  | 10.61 MB
+us-zips.pbf         | 12.24 MB  | 10.48 MB
 us-zips.topo.json   | 15.02 MB  | 3.19 MB
-us-zips.topo.pbf    | 5.69 MB   | 2.92 MB
+us-zips.topo.pbf    | 4.85 MB   | 2.72 MB
 idaho.json          | 10.92 MB  | 2.57 MB
 idaho.pbf           | 1.37 MB   | 1.17 MB
-world-50m.topo.json | 727 KB    | 228 KB
-world-50m.topo.pbf  | 212 KB    | 167 KB
+idaho.topo.json     | 1.9 MB    | 612 KB
+idaho.topo.pbf      | 567 KB    | 479 KB
 
 ### Usage
 
