@@ -13,8 +13,8 @@ def make_test_function(filename):
     def test(self):
         # self.maxDiff = None
         geojson = json.loads(open(filename, 'rb').read())
-        pb = encode.encode(geojson)
-        geojson2 = decode.decode(pb)
+        pb = encode.Encoder().encode(geojson)
+        geojson2 = decode.Decoder().decode(pb)
         self.assertEqual(geojson, geojson2, 'encode and decode ' + filename)
     return test
 
