@@ -8,9 +8,8 @@ message Data {
         Geometry geometry = 3;
     }
 
-    // global arrays of unique keys & values
+    // global arrays of unique keys
     repeated string keys = 4;
-    repeated Value values = 5;
 
     optional uint32 dimensions = 6 [default = 2]; // max coordinate dimensions
 
@@ -25,12 +24,12 @@ message Data {
     message Feature {
         required Geometry geometry = 1;
 
-        // pairs of key/value indexes
-        repeated uint32 properties = 2 [packed = true];
+        repeated uint32 properties = 2 [packed = true]; // pairs of key/value indexes
+        repeated Value values = 3; // unique property values
 
         oneof id_type {
-            string id = 3;
-            sint32 int_id = 4;
+            string id = 4;
+            sint32 int_id = 5;
         }
     }
 
@@ -39,18 +38,19 @@ message Data {
 
         // TopoJSON has props/id in Geometry rather than Feature
         repeated uint32 properties = 2 [packed = true];
+        repeated Value values = 3;
 
         oneof id_type {
-            string id = 3;
-            sint32 int_id = 4;
+            string id = 4;
+            sint32 int_id = 5;
         }
 
-        repeated sint32 coords = 5 [packed = true]; // delta-encoded integer values
-        repeated uint32 lengths = 6 [packed = true]; // coordinate structure in lengths
+        repeated sint32 coords = 6[packed = true]; // delta-encoded integer values
+        repeated uint32 lengths = 7 [packed = true]; // coordinate structure in lengths
 
-        optional GeometryCollection geometry_collection = 7;
+        optional GeometryCollection geometry_collection = 8;
 
-        optional string name = 8; // TopoJSON object name
+        optional string name = 9; // TopoJSON object name
     }
 
     message FeatureCollection { repeated Feature features = 1; }

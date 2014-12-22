@@ -29,7 +29,6 @@ class Encoder:
         self.e = pow(10, precision) # multiplier for converting coordinates into integers
 
         self.keys = collections.OrderedDict()
-        self.values = collections.OrderedDict()
         self.transformed = False
         self.is_topo = False
 
@@ -55,7 +54,7 @@ class Encoder:
 
     def encode_feature(self, feature, feature_json):
         self.encode_id(feature, feature_json.get('id'))
-        self.encode_properties(feature.properties, feature_json.get('properties'))
+        self.encode_properties(feature, feature_json.get('properties'))
         self.encode_geometry(feature.geometry, feature_json.get('geometry'))
 
 
@@ -98,7 +97,7 @@ class Encoder:
             if name is not None: geometry.name = name
             coords_or_arcs = geometry_json.get('arcs')
             self.encode_id(geometry, geometry_json.get('id'))
-            self.encode_properties(geometry.properties, geometry_json.get('properties'))
+            self.encode_properties(geometry, geometry_json.get('properties'))
 
         if gt == 'GeometryCollection':
             geometries = geometry.geometry_collection.geometries
@@ -120,12 +119,12 @@ class Encoder:
             self.add_multi_polygon(geometry, coords_or_arcs)
 
 
-    def encode_properties(self, properties, props_json):
+    def encode_properties(self, obj, props_json):
 
         if props_json is None: return
 
         keys = self.keys
-        values = self.values
+        values = collections.OrderedDict()
         data = self.data
 
         for key, val in props_json.viewitems():
@@ -141,8 +140,8 @@ class Encoder:
 
             if not (val in values):
                 values[val] = True
-                value = data.values.add()
-                valueIndex = len(data.values) - 1
+                value = obj.values.add()
+                valueIndex = len(obj.values) - 1
 
                 if value_is_json: value.json_value = val
                 elif isinstance(val, unicode): value.string_value = val
@@ -154,8 +153,8 @@ class Encoder:
             else:
                 valueIndex = values.keys().index(val)
 
-            properties.append(keyIndex)
-            properties.append(valueIndex)
+            obj.properties.append(keyIndex)
+            obj.properties.append(valueIndex)
 
 
     def encode_id(self, obj, id):

@@ -43,7 +43,7 @@ class Decoder:
 
         self.decode_id(feature, obj)
         obj['geometry'] = self.decode_geometry(feature.geometry)
-        if feature.properties: obj['properties'] = self.decode_properties(feature.properties)
+        if feature.properties: obj['properties'] = self.decode_properties(feature)
 
         return obj
 
@@ -74,19 +74,19 @@ class Decoder:
         return obj
 
 
-    def decode_properties(self, properties):
+    def decode_properties(self, feature):
         obj = {}
-        for i, prop in enumerate(properties):
-            if i % 2 == 0:
-                key = self.data.keys[properties[i]]
-                val = self.data.values[properties[i + 1]]
+        props = feature.properties
+        for i in xrange(0, len(props), 2):
+            key = self.data.keys[props[i]]
+            val = feature.values[props[i + 1]]
 
-                value_type = val.WhichOneof('value_type')
-                if value_type == 'string_value': obj[key] = val.string_value
-                elif value_type == 'double_value': obj[key] = val.double_value
-                elif value_type == 'int_value': obj[key] = val.int_value
-                elif value_type == 'bool_value': obj[key] = val.bool_value
-                elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
+            value_type = val.WhichOneof('value_type')
+            if value_type == 'string_value': obj[key] = val.string_value
+            elif value_type == 'double_value': obj[key] = val.double_value
+            elif value_type == 'int_value': obj[key] = val.int_value
+            elif value_type == 'bool_value': obj[key] = val.bool_value
+            elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
         return obj
 
 
@@ -103,7 +103,7 @@ class Decoder:
 
         if self.is_topo:
             self.decode_id(geometry, obj)
-            if len(geometry.properties): obj['properties'] = self.decode_properties(geometry.properties)
+            if len(geometry.properties): obj['properties'] = self.decode_properties(geometry)
             coords_or_arcs = 'arcs'
 
         if gt == 'GeometryCollection':
