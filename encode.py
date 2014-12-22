@@ -108,7 +108,7 @@ class Encoder:
             self.add_point(geometry.coords, coords)
 
         elif gt == 'MultiPoint':
-            self.add_line(geometry.coords, coords)
+            self.add_line(geometry.coords, coords, True)
 
         elif gt == 'LineString':
             self.add_line(geometry.coords, coords_or_arcs)
@@ -170,11 +170,13 @@ class Encoder:
     def add_point(self, coords, point):
         for x in point: self.add_coord(coords, x)
 
-    def add_line(self, coords, points):
+    def add_line(self, coords, points, is_multi_point=False):
+        r = range(self.dim)
         for i, p in enumerate(points):
-            if self.is_topo: coords.append(p - (points[i - 1] if i else 0)) # delta-encode arc indexes
+            if self.is_topo and not is_multi_point: # delta-encode arc indexes
+                coords.append(p - (points[i - 1] if i else 0))
             else: # delta-encode coordinates
-                for j in range(self.dim): self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
+                for j in r: self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
 
 
     def add_multi_line(self, geometry, lines):
