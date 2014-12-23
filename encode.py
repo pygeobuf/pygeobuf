@@ -82,7 +82,7 @@ class Encoder:
         data.geometry.type = self.geometry_types['GeometryCollection']
 
         for name, geom in data_json.get('objects').viewitems():
-            self.encode_geometry(data.geometry.geometry_collection.geometries.add(), geom, name)
+            self.encode_geometry(data.geometry.geometries.add(), geom, name)
 
 
     def encode_geometry(self, geometry, geometry_json, name=None):
@@ -100,8 +100,7 @@ class Encoder:
             self.encode_properties(geometry, geometry_json.get('properties'))
 
         if gt == 'GeometryCollection':
-            geometries = geometry.geometry_collection.geometries
-            for geom in geometry_json.get('geometries'): self.encode_geometry(geometries.add(), geom)
+            for geom in geometry_json.get('geometries'): self.encode_geometry(geometry.geometries.add(), geom)
 
         elif gt == 'Point':
             self.add_point(geometry.coords, coords)

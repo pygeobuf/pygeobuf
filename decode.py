@@ -61,7 +61,7 @@ class Decoder:
             self.transformed = True
 
         obj['objects'] = {}
-        for geom in data.geometry.geometry_collection.geometries:
+        for geom in data.geometry.geometries:
             obj['objects'][geom.name] = self.decode_geometry(geom)
 
         obj['arcs'] = []
@@ -107,7 +107,7 @@ class Decoder:
             coords_or_arcs = 'arcs'
 
         if gt == 'GeometryCollection':
-            obj['geometries'] = [self.decode_geometry(geom) for geom in geometry.geometry_collection.geometries]
+            obj['geometries'] = [self.decode_geometry(geom) for geom in geometry.geometries]
 
         elif gt == 'Point':
             obj['coordinates'] = self.decode_point(geometry.coords)
