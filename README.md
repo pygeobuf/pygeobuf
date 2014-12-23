@@ -1,7 +1,6 @@
 ## Geobuf
 
-**Geobuf** is a compact binary geospatial format for lossless compression of GeoJSON and TopoJSON data.
-
+Geobuf is a compact binary geospatial format for lossless compression of GeoJSON and TopoJSON data.
 Advantages over GeoJSON and TopoJSON:
 
 - **Very compact**: typically makes GeoJSON 6-8 times smaller and TopoJSON 2-3 times smaller.
