@@ -1,6 +1,16 @@
-## pygeobuf
+## Geobuf
 
-Reference encoding/decoding implementation (in Python) of the [new revision](https://github.com/mapbox/geobuf/issues/27) of [Geobuf](https://github.com/mapbox/geobuf/), a compact geospatial format that supports lossless compression of GeoJSON and TopoJSON data.
+**Geobuf** is a compact binary geospatial format for lossless compression of GeoJSON and TopoJSON data.
+
+Advantages over GeoJSON and TopoJSON:
+
+- **Very compact**: typically makes GeoJSON 6-8 times smaller and TopoJSON 2-3 times smaller.
+- Smaller even when comparing gzipped sizes: 2-2.5x compression for GeoJSON and 20-30% for TopoJSON.
+- Easy **incremental parsing** &mdash; you can get features out as you read them,
+without the need to build in-memory representation of the whole data.
+- **Partial reads** &mdash; you can read only the parts you actually need, skipping the rest.
+- Trivial **concatenation**: you can concatenate many Geobuf files together and they will form a valid combined Geobuf file.
+- Encoding/decoding is potentially faster and takes less memory than native JSON encoding/decoding (i.e. in Web browsers).
 
 #### Sample compression sizes
 
@@ -14,6 +24,12 @@ idaho.json          | 10.92 MB  | 2.57 MB
 idaho.pbf           | 1.37 MB   | 1.17 MB
 idaho.topo.json     | 1.9 MB    | 612 KB
 idaho.topo.pbf      | 567 KB    | 479 KB
+
+### pygeobuf
+
+This repository is the first encoding/decoding implementation
+of the [new, significantly improved revision](https://github.com/mapbox/geobuf/issues/27) of Geobuf (in Python).
+It serves as a prototyping playground for future (faster) implementations.
 
 ### Usage
 
