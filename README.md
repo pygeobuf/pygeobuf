@@ -1,7 +1,7 @@
 ## Geobuf
 
-Geobuf is a compact binary geospatial format for lossless compression of GeoJSON and TopoJSON data.
-Features compared to GeoJSON and TopoJSON (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
+Geobuf is a compact binary geospatial format for _lossless_ compression of GeoJSON and TopoJSON data.
+Advantages over using GeoJSON and TopoJSON directly (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
 
 - **Very compact**: typically makes GeoJSON 6-8 times smaller and TopoJSON 2-3 times smaller.
 - Smaller even when comparing gzipped sizes: 2-2.5x compression for GeoJSON and 20-30% for TopoJSON.
@@ -14,6 +14,9 @@ without the need to build in-memory representation of the whole data.
 
 Think of this as an attempt to design a simple, modern Shapefile successor
 that works seamlessly with GeoJSON and TopoJSON.
+
+Unlike [Mapbo Vector Tiles](https://github.com/mapbox/vector-tile-spec/), it aims for _lossless_ compression
+of datasets &mdash; without tiling, projecting coordinates, flattening geometries or stripping properties.
 
 #### pygeobuf
 
