@@ -35,6 +35,7 @@ class Encoder:
         data_type = obj['type']
 
         if data_type == 'FeatureCollection':
+            self.encode_custom_properties(data, obj, ('type', 'features'))
             for feature_json in obj.get('features'):
                 self.encode_feature(data.feature_collection.features.add(), feature_json)
 
@@ -55,6 +56,7 @@ class Encoder:
     def encode_feature(self, feature, feature_json):
         self.encode_id(feature, feature_json.get('id'))
         self.encode_properties(feature, feature_json.get('properties'))
+        self.encode_custom_properties(feature, feature_json, ('type', 'id', 'properties', 'geometry'))
         self.encode_geometry(feature.geometry, feature_json.get('geometry'))
 
 
@@ -74,6 +76,8 @@ class Encoder:
 
             self.transformed = True
 
+        self.encode_custom_properties(data, data_json, ('type', 'transform', 'arcs', 'objects'))
+
         arcs = data_json.get('arcs')
         for arc in arcs: data.arc_lengths.append(len(arc))
         for arc in arcs:
@@ -92,6 +96,9 @@ class Encoder:
         coords_or_arcs = coords
 
         geometry.type = self.geometry_types[gt]
+
+        self.encode_custom_properties(geometry, geometry_json,
+            ('type', 'id', 'coordinates', 'arcs', 'geometries', 'properties'))
 
         if self.is_topo:
             if name is not None: geometry.name = name
@@ -119,34 +126,42 @@ class Encoder:
 
 
     def encode_properties(self, obj, props_json):
-
         if props_json is None: return
 
-        keys = self.keys
-        data = self.data
-
         for key, val in props_json.viewitems():
-            if not (key in keys):
-                keys[key] = True
-                data.keys.append(key)
-                keyIndex = len(data.keys) - 1
-            else:
-                keyIndex = keys.keys().index(key)
+            self.encode_property(key, val, obj.properties, obj.values)
 
-            value = obj.values.add()
 
-            if isinstance(val, dict) or isinstance(val, list):
-                value.json_value = json.dumps(val, separators=(',',':'))
+    def encode_custom_properties(self, obj, obj_json, exclude):
+        for key, val in obj_json.viewitems():
+            if not (key in exclude):
+                self.encode_property(key, val, obj.custom_properties, obj.values)
 
-            elif isinstance(val, unicode): value.string_value = val
-            elif isinstance(val, float):
-                if val.is_integer(): value.int_value = int(val)
-                else: value.double_value = val
-            elif isinstance(val, int) or isinstance(val, long): value.int_value = val
-            elif isinstance(val, bool): value.bool_value = val
 
-            obj.properties.append(keyIndex)
-            obj.properties.append(len(obj.values) - 1)
+    def encode_property(self, key, val, properties, values):
+        keys = self.keys
+
+        if not (key in keys):
+            keys[key] = True
+            self.data.keys.append(key)
+            keyIndex = len(self.data.keys) - 1
+        else:
+            keyIndex = keys.keys().index(key)
+
+        value = values.add()
+
+        if isinstance(val, dict) or isinstance(val, list):
+            value.json_value = json.dumps(val, separators=(',',':'))
+
+        elif isinstance(val, unicode): value.string_value = val
+        elif isinstance(val, float):
+            if val.is_integer(): value.int_value = int(val)
+            else: value.double_value = val
+        elif isinstance(val, int) or isinstance(val, long): value.int_value = val
+        elif isinstance(val, bool): value.bool_value = val
+
+        properties.append(keyIndex)
+        properties.append(len(values) - 1)
 
 
     def encode_id(self, obj, id):

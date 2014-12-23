@@ -1,8 +1,10 @@
 {
     "type": "Feature",
+    "my_prop_1": {"foo": "bar"},
     "geometry": {
         "type": "Point",
-        "coordinates": [100.0, 0.0]
+        "coordinates": [100.0, 0.0],
+        "my_prop_2": 123
     },
     "properties": {
         "string": "foo",

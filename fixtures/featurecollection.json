@@ -1,5 +1,7 @@
 {
   "type": "FeatureCollection",
+  "myprop_1": "hello",
+  "myprop_2": 2,
   "features": [
     {
       "type": "Feature",

@@ -21,16 +21,21 @@ message Data {
     repeated sint32 arc_coords = 9 [packed = true];
     repeated uint32 arc_lengths = 10 [packed = true];
 
+    repeated Value values = 14; // unique values
+    repeated uint32 custom_properties = 15 [packed = true]; // arbitrary properties
+
+
     message Feature {
         required Geometry geometry = 1;
 
         repeated uint32 properties = 2 [packed = true]; // pairs of key/value indexes
-        repeated Value values = 3; // unique property values
-
         oneof id_type {
-            string id = 4;
-            sint32 int_id = 5;
+            string id = 3;
+            sint32 int_id = 4;
         }
+
+        repeated Value values = 14;
+        repeated uint32 custom_properties = 15 [packed = true];
     }
 
     message Geometry {
@@ -38,11 +43,9 @@ message Data {
 
         // TopoJSON has props/id in Geometry rather than Feature
         repeated uint32 properties = 2 [packed = true];
-        repeated Value values = 3;
-
         oneof id_type {
-            string id = 4;
-            sint32 int_id = 5;
+            string id = 3;
+            sint32 int_id = 4;
         }
 
         repeated sint32 coords = 6 [packed = true]; // delta-encoded integer values
@@ -50,9 +53,17 @@ message Data {
         repeated Geometry geometries = 8;
 
         optional string name = 9; // TopoJSON object name
+
+        repeated Value values = 14;
+        repeated uint32 custom_properties = 15 [packed = true];
     }
 
-    message FeatureCollection { repeated Feature features = 1; }
+    message FeatureCollection {
+        repeated Feature features = 1;
+
+        repeated Value values = 14;
+        repeated uint32 custom_properties = 15 [packed = true];
+    }
 
     enum Type {
         POINT = 0;

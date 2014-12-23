@@ -29,6 +29,7 @@ class Decoder:
 
         if data_type == 'feature_collection':
             obj = {'type': 'FeatureCollection', 'features': []}
+            self.decode_properties(data.custom_properties, data.values, obj)
             for feature in data.feature_collection.features:
                 obj['features'].append(self.decode_feature(feature))
             return obj
@@ -41,9 +42,11 @@ class Decoder:
         obj = collections.OrderedDict()
         obj['type'] = 'Feature'
 
+        self.decode_properties(feature.custom_properties, feature.values, obj)
+
         self.decode_id(feature, obj)
         obj['geometry'] = self.decode_geometry(feature.geometry)
-        if feature.properties: obj['properties'] = self.decode_properties(feature)
+        if len(feature.properties): obj['properties'] = self.decode_properties(feature.properties, feature.values)
 
         return obj
 
@@ -51,6 +54,8 @@ class Decoder:
     def decode_topology(self, data):
         obj = collections.OrderedDict()
         obj['type'] = 'Topology'
+
+        self.decode_properties(data.custom_properties, data.values, obj)
 
         if data.HasField('transform'):
             tr = data.transform
@@ -74,20 +79,19 @@ class Decoder:
         return obj
 
 
-    def decode_properties(self, feature):
-        obj = {}
-        props = feature.properties
+    def decode_properties(self, props, values, dest=None):
+        if dest is None: dest = {}
         for i in xrange(0, len(props), 2):
             key = self.data.keys[props[i]]
-            val = feature.values[props[i + 1]]
+            val = values[props[i + 1]]
 
             value_type = val.WhichOneof('value_type')
-            if value_type == 'string_value': obj[key] = val.string_value
-            elif value_type == 'double_value': obj[key] = val.double_value
-            elif value_type == 'int_value': obj[key] = val.int_value
-            elif value_type == 'bool_value': obj[key] = val.bool_value
-            elif value_type == 'json_value': obj[key] = json.loads(val.json_value)
-        return obj
+            if value_type == 'string_value': dest[key] = val.string_value
+            elif value_type == 'double_value': dest[key] = val.double_value
+            elif value_type == 'int_value': dest[key] = val.int_value
+            elif value_type == 'bool_value': dest[key] = val.bool_value
+            elif value_type == 'json_value': dest[key] = json.loads(val.json_value)
+        return dest
 
 
     def decode_id(self, obj, obj_json):
@@ -101,9 +105,12 @@ class Decoder:
         gt = obj['type'] = self.geometry_types[geometry.type]
         coords_or_arcs = 'coordinates'
 
+        self.decode_properties(geometry.custom_properties, geometry.values, obj)
+
         if self.is_topo:
             self.decode_id(geometry, obj)
-            if len(geometry.properties): obj['properties'] = self.decode_properties(geometry)
+            if len(geometry.properties):
+                obj['properties'] = self.decode_properties(geometry.properties, geometry.values)
             coords_or_arcs = 'arcs'
 
         if gt == 'GeometryCollection':
