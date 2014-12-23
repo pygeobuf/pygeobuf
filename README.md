@@ -12,6 +12,9 @@ without the need to build in-memory representation of the whole data.
 - Potentially **faster encoding/decoding** compared to native JSON implementations (i.e. in Web browsers).
 - Can still accommodate any GeoJSON and TopoJSON data, including extensions with arbitrary properties.
 
+Think of this as an attempt to design a simple, modern Shapefile successor
+that works seamlessly with GeoJSON and TopoJSON.
+
 #### pygeobuf
 
 This repository is the first encoding/decoding implementation
