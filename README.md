@@ -15,7 +15,7 @@ without the need to build in-memory representation of the whole data.
 Think of this as an attempt to design a simple, modern Shapefile successor
 that works seamlessly with GeoJSON and TopoJSON.
 
-Unlike [Mapbo Vector Tiles](https://github.com/mapbox/vector-tile-spec/), it aims for _lossless_ compression
+Unlike [Mapbox Vector Tiles](https://github.com/mapbox/vector-tile-spec/), it aims for _lossless_ compression
 of datasets &mdash; without tiling, projecting coordinates, flattening geometries or stripping properties.
 
 #### pygeobuf
