@@ -83,10 +83,8 @@ class Encoder:
         for arc in arcs:
             for p in arc: self.add_point(data.arc_coords, p)
 
-        data.geometry.type = self.geometry_types['GeometryCollection']
-
         for name, geom in data_json.get('objects').viewitems():
-            self.encode_geometry(data.geometry.geometries.add(), geom, name)
+            self.encode_geometry(data.topo_geometries.add(), geom, name)
 
 
     def encode_geometry(self, geometry, geometry_json, name=None):

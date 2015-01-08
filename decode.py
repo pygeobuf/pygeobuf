@@ -66,7 +66,7 @@ class Decoder:
             self.transformed = True
 
         obj['objects'] = {}
-        for geom in data.geometry.geometries:
+        for geom in data.topo_geometries:
             obj['objects'][geom.name] = self.decode_geometry(geom)
 
         obj['arcs'] = []
