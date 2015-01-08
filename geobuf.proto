@@ -36,11 +36,11 @@ message Data {
     message Geometry {
         required Type type = 1;
 
-        repeated uint32 lengths = 6 [packed = true]; // coordinate structure in lengths
-        repeated sint32 coords = 7 [packed = true]; // delta-encoded integer values
-        repeated Geometry geometries = 8;
+        repeated uint32 lengths = 2 [packed = true]; // coordinate structure in lengths
+        repeated sint32 coords = 3 [packed = true]; // delta-encoded integer values
+        repeated Geometry geometries = 4;
 
-        optional string name = 9; // TopoJSON object name
+        optional string name = 5; // TopoJSON object name
 
         // TopoJSON has props/id in Geometry rather than Feature
         oneof id_type {
