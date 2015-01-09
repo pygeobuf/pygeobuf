@@ -34,23 +34,20 @@ class Encoder:
 
         data_type = obj['type']
 
-        if data_type == 'FeatureCollection':
-            self.encode_custom_properties(data, obj, ('type', 'features'))
-            for feature_json in obj.get('features'):
-                self.encode_feature(data.feature_collection.features.add(), feature_json)
-
-        elif data_type == 'Feature':
-            self.encode_feature(data.feature, obj)
-
-        elif data_type == 'Topology':
-            self.is_topo = True
-            self.encode_topology(data, obj)
-
+        if data_type == 'FeatureCollection': self.encode_feature_collection(data.feature_collection, obj)
+        elif data_type == 'Feature': self.encode_feature(data.feature, obj)
+        elif data_type == 'Topology': self.encode_topology(data.topology, obj)
         else: self.encode_geometry(data.geometry, obj)
 
         # print tf.MessageToString(data)
 
         return data.SerializeToString()
+
+
+    def encode_feature_collection(self, feature_collection, feature_collection_json):
+        self.encode_custom_properties(feature_collection, feature_collection_json, ('type', 'features'))
+        for feature_json in feature_collection_json.get('features'):
+            self.encode_feature(feature_collection.features.add(), feature_json)
 
 
     def encode_feature(self, feature, feature_json):
@@ -60,7 +57,9 @@ class Encoder:
         self.encode_geometry(feature.geometry, feature_json.get('geometry'))
 
 
-    def encode_topology(self, data, data_json):
+    def encode_topology(self, topology, data_json):
+
+        self.is_topo = True
 
         transform_json = data_json.get('transform')
 
@@ -68,7 +67,7 @@ class Encoder:
             scale_json = transform_json.get('scale')
             translate_json = transform_json.get('translate')
 
-            transform = data.transform
+            transform = topology.transform
             transform.scale_x = scale_json[0]
             transform.scale_y = scale_json[1]
             transform.translate_x = translate_json[0]
@@ -76,18 +75,19 @@ class Encoder:
 
             self.transformed = True
 
-        self.encode_custom_properties(data, data_json, ('type', 'transform', 'arcs', 'objects'))
+        self.encode_custom_properties(topology, data_json, ('type', 'transform', 'arcs', 'objects'))
 
         arcs = data_json.get('arcs')
-        for arc in arcs: data.arc_lengths.append(len(arc))
+        for arc in arcs: topology.lengths.append(len(arc))
         for arc in arcs:
-            for p in arc: self.add_point(data.arc_coords, p)
+            for p in arc: self.add_point(topology.coords, p)
 
         for name, geom in data_json.get('objects').viewitems():
-            self.encode_geometry(data.topo_geometries.add(), geom, name)
+            topology.names.append(name);
+            self.encode_geometry(topology.objects.add(), geom)
 
 
-    def encode_geometry(self, geometry, geometry_json, name=None):
+    def encode_geometry(self, geometry, geometry_json):
 
         gt = geometry_json['type']
         coords = geometry_json.get('coordinates')
@@ -99,7 +99,6 @@ class Encoder:
             ('type', 'id', 'coordinates', 'arcs', 'geometries', 'properties'))
 
         if self.is_topo:
-            if name is not None: geometry.name = name
             coords_or_arcs = geometry_json.get('arcs')
             self.encode_id(geometry, geometry_json.get('id'))
             self.encode_properties(geometry, geometry_json.get('properties'))
@@ -153,13 +152,18 @@ class Encoder:
 
         elif isinstance(val, unicode): value.string_value = val
         elif isinstance(val, float):
-            if val.is_integer(): value.int_value = int(val)
+            if val.is_integer(): self.encode_int(int(val), value)
             else: value.double_value = val
-        elif isinstance(val, int) or isinstance(val, long): value.int_value = val
+        elif isinstance(val, int) or isinstance(val, long): self.encode_int(val, value)
         elif isinstance(val, bool): value.bool_value = val
 
         properties.append(keyIndex)
         properties.append(len(values) - 1)
+
+
+    def encode_int(self, val, value):
+        if val >= 0: value.pos_int_value = val;
+        else: value.neg_int_value = -val;
 
 
     def encode_id(self, obj, id):

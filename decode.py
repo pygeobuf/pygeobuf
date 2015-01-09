@@ -21,21 +21,23 @@ class Decoder:
         self.e = pow(10, data.precision)
         self.dim = data.dimensions
         self.transformed = False
-        self.is_topo = len(data.arc_coords) > 0
-
-        if self.is_topo: return self.decode_topology(data)
+        self.is_topo = False
 
         data_type = data.WhichOneof('data_type')
 
-        if data_type == 'feature_collection':
-            obj = {'type': 'FeatureCollection', 'features': []}
-            self.decode_properties(data.custom_properties, data.values, obj)
-            for feature in data.feature_collection.features:
-                obj['features'].append(self.decode_feature(feature))
-            return obj
-
+        if data_type == 'feature_collection': return self.decode_feature_collection(data.feature_collection)
         elif data_type == 'feature': return self.decode_feature(data.feature)
         elif data_type == 'geometry': return self.decode_geometry(data.geometry)
+        elif data_type == 'topology': return self.decode_topology(data.topology)
+
+
+    def decode_feature_collection(self, feature_collection):
+        obj = {'type': 'FeatureCollection', 'features': []}
+        self.decode_properties(feature_collection.custom_properties, feature_collection.values, obj)
+        for feature in feature_collection.features:
+            obj['features'].append(self.decode_feature(feature))
+
+        return obj
 
 
     def decode_feature(self, feature):
@@ -51,14 +53,16 @@ class Decoder:
         return obj
 
 
-    def decode_topology(self, data):
+    def decode_topology(self, topology):
         obj = collections.OrderedDict()
         obj['type'] = 'Topology'
 
-        self.decode_properties(data.custom_properties, data.values, obj)
+        self.is_topo = True
 
-        if data.HasField('transform'):
-            tr = data.transform
+        self.decode_properties(topology.custom_properties, topology.values, obj)
+
+        if topology.HasField('transform'):
+            tr = topology.transform
             obj['transform'] = {
                 'scale': [tr.scale_x, tr.scale_y],
                 'translate': [tr.translate_x, tr.translate_y]
@@ -66,13 +70,13 @@ class Decoder:
             self.transformed = True
 
         obj['objects'] = {}
-        for geom in data.topo_geometries:
-            obj['objects'][geom.name] = self.decode_geometry(geom)
+        for i, geom in enumerate(topology.objects):
+            obj['objects'][topology.names[i]] = self.decode_geometry(geom)
 
         obj['arcs'] = []
         i = 0
-        for l in data.arc_lengths:
-            obj['arcs'].append([self.decode_point(data.arc_coords[j:j + self.dim])
+        for l in topology.lengths:
+            obj['arcs'].append([self.decode_point(topology.coords[j:j + self.dim])
                     for j in xrange(i, i + l * self.dim, self.dim)])
             i += l * self.dim
 
@@ -88,7 +92,8 @@ class Decoder:
             value_type = val.WhichOneof('value_type')
             if value_type == 'string_value': dest[key] = val.string_value
             elif value_type == 'double_value': dest[key] = val.double_value
-            elif value_type == 'int_value': dest[key] = val.int_value
+            elif value_type == 'pos_int_value': dest[key] = val.pos_int_value
+            elif value_type == 'neg_int_value': dest[key] = -val.neg_int_value
             elif value_type == 'bool_value': dest[key] = val.bool_value
             elif value_type == 'json_value': dest[key] = json.loads(val.json_value)
         return dest
