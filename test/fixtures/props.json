@@ -1,0 +1,46 @@
+{
+    "@context": {
+        "Feature": "http://example.com/vocab#Feature",
+        "datetime": {
+            "@id": "http://www.w3.org/2006/time#inXSDDateTime",
+            "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+        },
+        "when": "http://example.com/vocab#when"
+    },
+    "type": "FeatureCollection",
+    "foo": "bar",
+    "features": [{
+        "type": "Feature",
+        "id": 123,
+        "my_prop_1": {"foo": "bar"},
+        "geometry": {
+            "type": "Point",
+            "coordinates": [100.0, 0.0],
+            "my_prop_2": 123
+        },
+        "properties": {
+            "string": "foo",
+            "int": 5,
+            "float": 123.456,
+            "bool": false,
+            "empty": "",
+            "zero": 0,
+            "complex": {
+                "foo": "bar",
+                "baz": [1, 2, 3]
+            }
+        }
+    }, {
+        "type": "Feature",
+        "@type": "Feature",
+        "id": "foo",
+        "when": {
+            "datetime": "2014-04-24",
+            "@type": "Instant"
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [100.0, 0.0]
+        }
+    }]
+}
