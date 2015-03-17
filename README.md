@@ -1,6 +1,10 @@
 ## Geobuf
 
 Geobuf is a compact binary geospatial format for _lossless_ compression of GeoJSON and TopoJSON data.
+
+[![Build Status](https://travis-ci.org/mapbox/pygeobuf.svg?branch=master)](https://travis-ci.org/mapbox/pygeobuf)
+[![Coverage Status](https://coveralls.io/repos/mapbox/pygeobuf/badge.svg?branch=master)](https://coveralls.io/r/mapbox/pygeobuf?branch=master)
+
 Advantages over using GeoJSON and TopoJSON directly (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
 
 - **Very compact**: typically makes GeoJSON 6-8 times smaller and TopoJSON 2-3 times smaller.
