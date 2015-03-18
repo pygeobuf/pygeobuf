@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import collections
@@ -182,8 +181,6 @@ class Decoder:
 
 
     def decode_multi_polygon(self, geometry):
-        if len(geometry.lengths) == 0:
-            return [[self.decode_line(geometry.coords)]]
 
         obj = []
         i = 0
@@ -201,10 +198,3 @@ class Decoder:
                 i += l * d
             obj.append(rings)
         return obj
-
-
-if __name__ == "__main__":
-    filename = sys.argv[1]
-    data_str = open(filename,'rb').read()
-    obj = Decoder().decode(data_str)
-    open(filename.replace('.pbf', '.pbf.json'), 'wb').write(json.dumps(obj))

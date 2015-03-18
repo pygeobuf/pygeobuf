@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 import collections
@@ -154,8 +153,9 @@ class Encoder:
         elif isinstance(val, float):
             if val.is_integer(): self.encode_int(int(val), value)
             else: value.double_value = val
-        elif isinstance(val, int) or isinstance(val, long): self.encode_int(val, value)
         elif isinstance(val, bool): value.bool_value = val
+        elif isinstance(val, int) or isinstance(val, long): self.encode_int(val, value)
+
 
         properties.append(keyIndex)
         properties.append(len(values) - 1)
@@ -203,21 +203,3 @@ class Encoder:
 
         for rings in polygons:
             for points in rings: self.add_line(geometry.coords, points)
-
-
-if __name__ == '__main__':
-    filename = sys.argv[1]
-    data = open(filename,'rb').read()
-    json_object = json.loads(data)
-
-    if len(sys.argv) > 3:
-        proto = Encoder().encode(json_object, int(sys.argv[2]), int(sys.argv[3]))
-    elif len(sys.argv) > 2:
-        proto = Encoder().encode(json_object, int(sys.argv[2]))
-    else:
-        proto = Encoder().encode(json_object)
-
-    print "Encoded in %d bytes out of %d (%d)" % (
-        len(proto), len(data), 100 * len(proto) / len(data))
-
-    open(filename.replace('.json', '.pbf'), 'wb').write(proto)
