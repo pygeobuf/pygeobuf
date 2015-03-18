@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-import json
-import geobuf_pb2
 import collections
-# import google.protobuf.text_format as tf
+import json
+import sys
+
+from . import geobuf_pb2
 
 
 class Encoder:
@@ -217,6 +217,7 @@ if __name__ == '__main__':
     else:
         proto = Encoder().encode(json_object)
 
-    print 'Encoded in %d bytes out of %d (%d%%)' % (len(proto), len(data), 100 * len(proto) / len(data))
+    print "Encoded in %d bytes out of %d (%d)" % (
+        len(proto), len(data), 100 * len(proto) / len(data))
 
     open(filename.replace('.json', '.pbf'), 'wb').write(proto)

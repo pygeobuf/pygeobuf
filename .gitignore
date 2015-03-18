@@ -1,5 +1,4 @@
-geobuf_pb2.py
-geobuf_pb2.pyc
+*.pyc
 fixtures/tmp
 fixtures/*.pbf
 fixtures/*.pbf.json

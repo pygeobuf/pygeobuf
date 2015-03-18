@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import sys
-import json
-import geobuf_pb2
 import collections
+import json
+import sys
+
+from . import geobuf_pb2
 
 
 class Decoder:
@@ -207,4 +208,3 @@ if __name__ == "__main__":
     data_str = open(filename,'rb').read()
     obj = Decoder().decode(data_str)
     open(filename.replace('.pbf', '.pbf.json'), 'wb').write(json.dumps(obj))
-
