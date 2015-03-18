@@ -21,6 +21,7 @@
         "properties": {
             "string": "foo",
             "int": 5,
+            "neg_int": -5,
             "float": 123.456,
             "bool": false,
             "empty": "",
