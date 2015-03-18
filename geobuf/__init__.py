@@ -1,5 +1,11 @@
 from .encode import Encoder
 from .decode import Decoder
 
-def encode(*args): return Encoder(*args).encode()
-def decode(*args): return Decoder(*args).decode()
+
+__version__ = '1.0.0'
+
+def encode(*args):
+    return Encoder().encode(*args)
+
+def decode(*args):
+    return Decoder().decode(*args)

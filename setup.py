@@ -22,8 +22,13 @@ setup(name='pygeobuf',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
+          'cligj',
           'protobuf',
       ],
       extras_require={
           'test': ['pytest'],
-      })
+      },
+      entry_points="""
+      [console_scripts]
+      geobuf=geobuf.scripts.cli:cli
+      """)
