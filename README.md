@@ -46,8 +46,8 @@ idaho.topo.pbf      | 567 KB    | 479 KB
 Command line:
 
 ```bash
-./encode.py sample.json # -> sample.pbf
-./decode.py sample.pbf  # -> sample.pbf.json
+geobuf encode < example.json > example.pbf
+geobuf decode < example.pbf > example.pbf.json
 ```
 
 As a module:
@@ -69,7 +69,7 @@ Both `encode.py` and `geobuf.encode` accept two optional arguments:
 ### Tests
 
 ```bash
-python test.py -v
+py.test -v
 ```
 
 The tests run through all `.json` files in the `fixtures` directory,
