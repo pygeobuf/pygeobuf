@@ -181,6 +181,8 @@ class Decoder:
 
 
     def decode_multi_polygon(self, geometry):
+        if len(geometry.lengths) == 0:
+            return [[self.decode_line(geometry.coords)]]
 
         obj = []
         i = 0
