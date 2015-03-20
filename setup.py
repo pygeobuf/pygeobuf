@@ -37,7 +37,7 @@ setup(name='pygeobuf',
       include_package_data=True,
       zip_safe=False,
       install_requires=[
-          'cligj',
+          'click',
           'protobuf',
       ],
       extras_require={
