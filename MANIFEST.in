@@ -1,0 +1,5 @@
+exclude *.rst *.txt *.py
+include CHANGES AUTHORS LICENSE README.md setup.py
+recursive-include test *.py
+recursive-include test/fixtures *.json
+exclude MANIFEST.in
