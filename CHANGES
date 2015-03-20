@@ -1,0 +1,7 @@
+Changes
+=======
+
+1.0.0 (2015-03-20)
+------------------
+- New Python packaging.
+- New CLI commands `geobuf encode` and `geobuf decode`. See `geobuf --help`.

@@ -195,7 +195,7 @@ class Encoder:
 
 
     def add_multi_polygon(self, geometry, polygons):
-        if len(polygons) != 1 or len(polygons[0]) != 1 or len(polygons[0][0]) != 1:
+        if len(polygons) != 1 or len(polygons[0]) != 1:
             geometry.lengths.append(len(polygons))
             for rings in polygons:
                 geometry.lengths.append(len(rings))
