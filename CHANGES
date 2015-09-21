@@ -1,6 +1,10 @@
 Changes
 =======
 
+Next
+----
+- Change coordinates to sint64 (#21).
+
 1.0.0 (2015-03-20)
 ------------------
 - New Python packaging.
