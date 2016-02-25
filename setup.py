@@ -36,10 +36,7 @@ setup(name='geobuf',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
-      install_requires=[
-          'click',
-          'protobuf',
-      ],
+      install_requires=['click', 'protobuf', 'six'],
       extras_require={
           'test': ['pytest'],
       },

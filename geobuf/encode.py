@@ -4,6 +4,8 @@ import collections
 import json
 import sys
 
+import six
+
 from . import geobuf_pb2
 
 
@@ -81,7 +83,7 @@ class Encoder:
         for arc in arcs:
             for p in arc: self.add_point(topology.coords, p)
 
-        for name, geom in data_json.get('objects').viewitems():
+        for name, geom in data_json.get('objects').items():
             topology.names.append(name);
             self.encode_geometry(topology.objects.add(), geom)
 
@@ -124,12 +126,12 @@ class Encoder:
     def encode_properties(self, obj, props_json):
         if props_json is None: return
 
-        for key, val in props_json.viewitems():
+        for key, val in props_json.items():
             self.encode_property(key, val, obj.properties, obj.values)
 
 
     def encode_custom_properties(self, obj, obj_json, exclude):
-        for key, val in obj_json.viewitems():
+        for key, val in obj_json.items():
             if not (key in exclude):
                 self.encode_property(key, val, obj.custom_properties, obj.values)
 
@@ -142,14 +144,14 @@ class Encoder:
             self.data.keys.append(key)
             keyIndex = len(self.data.keys) - 1
         else:
-            keyIndex = keys.keys().index(key)
+            keyIndex = list(keys.keys()).index(key)
 
         value = values.add()
 
         if isinstance(val, dict) or isinstance(val, list):
             value.json_value = json.dumps(val, separators=(',',':'))
 
-        elif isinstance(val, unicode): value.string_value = val
+        elif isinstance(val, six.text_type): value.string_value = val
         elif isinstance(val, float):
             if val.is_integer(): self.encode_int(int(val), value)
             else: value.double_value = val
