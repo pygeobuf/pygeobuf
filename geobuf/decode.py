@@ -77,7 +77,7 @@ class Decoder:
         i = 0
         for l in topology.lengths:
             obj['arcs'].append([self.decode_point(topology.coords[j:j + self.dim])
-                    for j in xrange(i, i + l * self.dim, self.dim)])
+                    for j in range(i, i + l * self.dim, self.dim)])
             i += l * self.dim
 
         return obj
@@ -85,7 +85,7 @@ class Decoder:
 
     def decode_properties(self, props, values, dest=None):
         if dest is None: dest = {}
-        for i in xrange(0, len(props), 2):
+        for i in range(0, len(props), 2):
             key = self.data.keys[props[i]]
             val = values[props[i + 1]]
 
@@ -155,7 +155,7 @@ class Decoder:
         else:
             d = self.dim
             r = range(d)
-            r2 = xrange(0, len(coords), d)
+            r2 = range(0, len(coords), d)
             p0 = [0 for i in r]
             for i in r2:
                 p = [p0[j] + coords[i + j] for j in r]
