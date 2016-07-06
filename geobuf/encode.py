@@ -164,8 +164,11 @@ class Encoder:
 
 
     def encode_int(self, val, value):
-        if val >= 0: value.pos_int_value = val;
-        else: value.neg_int_value = -val;
+        try:
+            if val >= 0: value.pos_int_value = val;
+            else: value.neg_int_value = -val;
+        except ValueError:
+            value.double_value = val
 
 
     def encode_id(self, obj, id):
