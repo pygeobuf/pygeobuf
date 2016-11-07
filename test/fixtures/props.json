@@ -26,6 +26,7 @@
             "bool": false,
             "empty": "",
             "zero": 0,
+            "int64" : 899051524699.0,
             "complex": {
                 "foo": "bar",
                 "baz": [1, 2, 3]
