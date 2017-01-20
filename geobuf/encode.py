@@ -21,7 +21,7 @@ class Encoder:
         'GeometryCollection': 6
     }
 
-    def encode(self, data_json, precision=6, dim=2):
+    def encode(self, data_json, precision=6, dim=2, as_sting=True):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
 
@@ -42,7 +42,10 @@ class Encoder:
 
         # print tf.MessageToString(data)
 
-        return data
+        if as_string:
+            return data.SerializeToString()
+        else:
+            return data
 
 
     def encode_feature_collection(self, feature_collection, feature_collection_json):
