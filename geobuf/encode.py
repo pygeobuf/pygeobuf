@@ -21,7 +21,7 @@ class Encoder:
         'GeometryCollection': 6
     }
 
-    def encode(self, data_json, precision=6, dim=2, as_sting=True):
+    def encode(self, data_json, precision=6, dim=2, as_string=True):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
 
