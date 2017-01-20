@@ -54,7 +54,7 @@ def encode(precision, with_z):
             data,
             precision if precision >= 0 else 6,
             3 if with_z else 2)
-        sink.write(pbf.SerializeToString())
+        sink.write(pbf)
         sys.exit(0)
     except Exception:
         logger.exception("Failed. Exception caught")
