@@ -2,6 +2,7 @@
 
 import collections
 import json
+import six
 import sys
 
 from . import geobuf_pb2
@@ -15,7 +16,7 @@ class Decoder:
 
     def decode(self, data):
 
-        if isinstance(data, basestring):
+        if isinstance(data, six.string_types):
             data_str = data
             data = self.data = geobuf_pb2.Data()
             data.ParseFromString(data_str)
