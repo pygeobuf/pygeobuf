@@ -13,10 +13,14 @@ class Decoder:
                       'Polygon', 'MultiPolygon', 'GeometryCollection')
 
 
-    def decode(self, data_str):
+    def decode(self, data):
 
-        data = self.data = geobuf_pb2.Data()
-        data.ParseFromString(data_str)
+        if isinstance(data, basestring):
+            data_str = data
+            data = self.data = geobuf_pb2.Data()
+            data.ParseFromString(data_str)
+        else:
+            assert isinstance(data, geobuf_pb2.Data)
 
         self.e = pow(10, data.precision)
         self.dim = data.dimensions

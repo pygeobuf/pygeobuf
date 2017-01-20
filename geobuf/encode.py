@@ -42,7 +42,7 @@ class Encoder:
 
         # print tf.MessageToString(data)
 
-        return data.SerializeToString()
+        return data
 
 
     def encode_feature_collection(self, feature_collection, feature_collection_json):
