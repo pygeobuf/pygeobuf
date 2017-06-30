@@ -156,7 +156,7 @@ class Encoder:
             if val.is_integer(): self.encode_int(int(val), value)
             else: value.double_value = val
         elif isinstance(val, bool): value.bool_value = val
-        elif isinstance(val, int) or isinstance(val, long): self.encode_int(val, value)
+        elif isinstance(val, six.integer_types): self.encode_int(val, value)
 
 
         properties.append(keyIndex)
