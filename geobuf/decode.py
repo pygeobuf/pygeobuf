@@ -18,7 +18,6 @@ class Decoder:
         self.e = pow(10, data.precision)
         self.dim = data.dimensions
         self.transformed = False
-        self.is_topo = False
 
         data_type = data.WhichOneof('data_type')
 
@@ -28,8 +27,6 @@ class Decoder:
             return self.decode_feature(data.feature)
         elif data_type == 'geometry':
             return self.decode_geometry(data.geometry)
-        elif data_type == 'topology':
-            return self.decode_topology(data.topology)
 
     def decode_feature_collection(self, feature_collection):
         obj = {'type': 'FeatureCollection', 'features': []}
@@ -49,35 +46,6 @@ class Decoder:
         obj['geometry'] = self.decode_geometry(feature.geometry)
         if len(feature.properties):
             obj['properties'] = self.decode_properties(feature.properties, feature.values)
-
-        return obj
-
-    def decode_topology(self, topology):
-        obj = collections.OrderedDict()
-        obj['type'] = 'Topology'
-
-        self.is_topo = True
-
-        self.decode_properties(topology.custom_properties, topology.values, obj)
-
-        if topology.HasField('transform'):
-            tr = topology.transform
-            obj['transform'] = {
-                'scale': [tr.scale_x, tr.scale_y],
-                'translate': [tr.translate_x, tr.translate_y]
-            }
-            self.transformed = True
-
-        obj['objects'] = {}
-        for i, geom in enumerate(topology.objects):
-            obj['objects'][topology.names[i]] = self.decode_geometry(geom)
-
-        obj['arcs'] = []
-        i = 0
-        for l in topology.lengths:
-            obj['arcs'].append([self.decode_point(topology.coords[j:j + self.dim])
-                                for j in range(i, i + l * self.dim, self.dim)])
-            i += l * self.dim
 
         return obj
 
@@ -118,12 +86,6 @@ class Decoder:
 
         self.decode_properties(geometry.custom_properties, geometry.values, obj)
 
-        if self.is_topo:
-            self.decode_id(geometry, obj)
-            if len(geometry.properties):
-                obj['properties'] = self.decode_properties(geometry.properties, geometry.values)
-            coords_or_arcs = 'arcs'
-
         if gt == 'GeometryCollection':
             obj['geometries'] = [self.decode_geometry(geom) for geom in geometry.geometries]
         elif gt == 'Point':
@@ -148,20 +110,14 @@ class Decoder:
     def decode_line(self, coords, is_multi_point=False):
         obj = []
 
-        if self.is_topo and not is_multi_point:
-            i0 = 0
-            for i in coords:
-                obj.append(i0 + i)
-                i0 += i
-        else:
-            d = self.dim
-            r = range(d)
-            r2 = range(0, len(coords), d)
-            p0 = [0 for _ in r]
-            for i in r2:
-                p = [p0[j] + coords[i + j] for j in r]
-                obj.append(self.decode_point(p))
-                p0 = p
+        d = self.dim
+        r = range(d)
+        r2 = range(0, len(coords), d)
+        p0 = [0 for _ in r]
+        for i in r2:
+            p = [p0[j] + coords[i + j] for j in r]
+            obj.append(self.decode_point(p))
+            p0 = p
 
         return obj
 
@@ -171,7 +127,7 @@ class Decoder:
 
         obj = []
         i = 0
-        d = 1 if self.is_topo else self.dim
+        d = self.dim
 
         for l in geometry.lengths:
             obj.append(self.decode_line(geometry.coords[i:i + l * d]))
@@ -187,7 +143,7 @@ class Decoder:
         i = 0
         num_polygons = geometry.lengths[0]
         j = 1
-        d = 1 if self.is_topo else self.dim
+        d = self.dim
 
         for n in range(num_polygons):  # for every polygon
             num_rings = geometry.lengths[j]

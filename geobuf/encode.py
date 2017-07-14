@@ -29,7 +29,6 @@ class Encoder:
 
         self.keys = collections.OrderedDict()
         self.transformed = False
-        self.is_topo = False
 
         data_type = obj['type']
 
@@ -37,8 +36,6 @@ class Encoder:
             self.encode_feature_collection(data.feature_collection, obj)
         elif data_type == 'Feature':
             self.encode_feature(data.feature, obj)
-        elif data_type == 'Topology':
-            self.encode_topology(data.topology, obj)
         else:
             self.encode_geometry(data.geometry, obj)
 
@@ -55,37 +52,6 @@ class Encoder:
         self.encode_custom_properties(feature, feature_json, ('type', 'id', 'properties', 'geometry'))
         self.encode_geometry(feature.geometry, feature_json.get('geometry'))
 
-    def encode_topology(self, topology, data_json):
-
-        self.is_topo = True
-
-        transform_json = data_json.get('transform')
-
-        if transform_json:
-            scale_json = transform_json.get('scale')
-            translate_json = transform_json.get('translate')
-
-            transform = topology.transform
-            transform.scale_x = scale_json[0]
-            transform.scale_y = scale_json[1]
-            transform.translate_x = translate_json[0]
-            transform.translate_y = translate_json[1]
-
-            self.transformed = True
-
-        self.encode_custom_properties(topology, data_json, ('type', 'transform', 'arcs', 'objects'))
-
-        arcs = data_json.get('arcs')
-        for arc in arcs:
-            topology.lengths.append(len(arc))
-        for arc in arcs:
-            for p in arc:
-                self.add_point(topology.coords, p)
-
-        for name, geom in data_json.get('objects').items():
-            topology.names.append(name)
-            self.encode_geometry(topology.objects.add(), geom)
-
     def encode_geometry(self, geometry, geometry_json):
 
         gt = geometry_json['type']
@@ -96,11 +62,6 @@ class Encoder:
 
         self.encode_custom_properties(geometry, geometry_json,
                                       ('type', 'id', 'coordinates', 'arcs', 'geometries', 'properties'))
-
-        if self.is_topo:
-            coords_or_arcs = geometry_json.get('arcs')
-            self.encode_id(geometry, geometry_json.get('id'))
-            self.encode_properties(geometry, geometry_json.get('properties'))
 
         if gt == 'GeometryCollection':
             for geom in geometry_json.get('geometries'):
@@ -183,11 +144,9 @@ class Encoder:
     def add_line(self, coords, points, is_multi_point=False):
         r = range(self.dim)
         for i, p in enumerate(points):
-            if self.is_topo and not is_multi_point:  # delta-encode arc indexes
-                coords.append(p - (points[i - 1] if i else 0))
-            else:  # delta-encode coordinates
-                for j in r:
-                    self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
+            # delta-encode coordinates
+            for j in r:
+                self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
 
     def add_multi_line(self, geometry, lines):
         if len(lines) != 1:
