@@ -19,6 +19,14 @@ class Encoder:
         'GeometryCollection': 6,
     }
 
+    def __init__(self):
+        self.json = None
+        self.data = None
+        self.precision = None
+        self.dim = None
+        self.e = None
+        self.keys = collections.OrderedDict()
+
     def encode(self, data_json, precision=6, dim=2):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
@@ -26,9 +34,6 @@ class Encoder:
         self.precision = precision
         self.dim = dim
         self.e = pow(10, precision)  # multiplier for converting coordinates into integers
-
-        self.keys = collections.OrderedDict()
-        self.transformed = False
 
         data_type = obj['type']
 
@@ -56,7 +61,6 @@ class Encoder:
 
         gt = geometry_json['type']
         coords = geometry_json.get('coordinates')
-        coords_or_arcs = coords
 
         geometry.type = self.geometry_types[gt]
 
@@ -69,13 +73,15 @@ class Encoder:
         elif gt == 'Point':
             self.add_point(geometry.coords, coords)
         elif gt == 'MultiPoint':
-            self.add_line(geometry.coords, coords, True)
+            self.add_line(geometry.coords, coords)
         elif gt == 'LineString':
-            self.add_line(geometry.coords, coords_or_arcs)
-        elif gt == 'MultiLineString' or gt == 'Polygon':
-            self.add_multi_line(geometry, coords_or_arcs)
+            self.add_line(geometry.coords, coords)
+        elif gt == 'MultiLineString':
+            self.add_multi_line(geometry, coords)
+        elif gt == 'Polygon':
+            self.add_multi_line(geometry, coords, is_closed=True)
         elif gt == 'MultiPolygon':
-            self.add_multi_polygon(geometry, coords_or_arcs)
+            self.add_multi_polygon(geometry, coords)
 
     def encode_properties(self, obj, props_json):
         if props_json:
@@ -135,26 +141,29 @@ class Encoder:
                 obj.id = str(id)
 
     def add_coord(self, coords, coord):
-        coords.append(coord if self.transformed else int(round(coord * self.e)))
+        coords.append(int(round(coord * self.e)))
 
     def add_point(self, coords, point):
         for x in point:
             self.add_coord(coords, x)
 
-    def add_line(self, coords, points, is_multi_point=False):
+    def add_line(self, coords, points, is_closed=False):
         r = range(self.dim)
-        for i, p in enumerate(points):
-            # delta-encode coordinates
+        sum = [0] * self.dim
+        r2 = range(0, len(points) - int(is_closed))
+        for i in r2:
             for j in r:
-                self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
+                n = round(points[i][j] * self.e) - sum[j]
+                coords.append(n)
+                sum[j] += n
 
-    def add_multi_line(self, geometry, lines):
+    def add_multi_line(self, geometry, lines, is_closed=False):
         if len(lines) != 1:
             for points in lines:
-                geometry.lengths.append(len(points))
+                geometry.lengths.append(len(points) - int(is_closed))
 
         for points in lines:
-            self.add_line(geometry.coords, points)
+            self.add_line(geometry.coords, points, is_closed)
 
     def add_multi_polygon(self, geometry, polygons):
         if len(polygons) != 1 or len(polygons[0]) != 1:
@@ -162,8 +171,8 @@ class Encoder:
             for rings in polygons:
                 geometry.lengths.append(len(rings))
                 for points in rings:
-                    geometry.lengths.append(len(points))
+                    geometry.lengths.append(len(points) - 1)
 
         for rings in polygons:
             for points in rings:
-                self.add_line(geometry.coords, points)
+                self.add_line(geometry.coords, points, is_closed=True)
