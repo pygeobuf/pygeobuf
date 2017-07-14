@@ -148,11 +148,10 @@ class Encoder:
             self.add_coord(coords, x)
 
     def add_line(self, coords, points, is_closed=False):
-        r = range(self.dim)
         sum = [0] * self.dim
-        r2 = range(0, len(points) - int(is_closed))
-        for i in r2:
-            for j in r:
+        r = range(0, len(points) - int(is_closed))
+        for i in r:
+            for j in range(0, self.dim):
                 n = round(points[i][j] * self.e) - sum[j]
                 coords.append(n)
                 sum[j] += n
