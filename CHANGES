@@ -1,6 +1,12 @@
 Changes
 =======
 
+2.0.0 (TBD)
+------------------
+- Matches the functionality provided by mapbox/geobuf v3.0.0
+- **Breaking**: removed TopoJSON support
+- **Breaking**: changed encoding to not include the closing point of a polygon ring
+
 1.1.1 (2017-10-06)
 ------------------
 - Fix integer encoding with Python 3 (#33).
