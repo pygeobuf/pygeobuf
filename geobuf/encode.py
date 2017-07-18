@@ -152,7 +152,7 @@ class Encoder:
         r = range(0, len(points) - int(is_closed))
         for i in r:
             for j in range(0, self.dim):
-                n = round(points[i][j] * self.e) - sum[j]
+                n = int(round(points[i][j] * self.e) - sum[j])
                 coords.append(n)
                 sum[j] += n
 
