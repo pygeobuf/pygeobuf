@@ -5,10 +5,8 @@ python:
   - 3.5
 addons:
   apt:
-    sources:
-      - deadsnakes
     packages:
-      - python3.5
+      - pandoc
 env:
   - TOXENV=py27
   - TOXENV=py35
@@ -16,5 +14,12 @@ install:
   - "pip install tox"
 script:
   - tox
+  - python setup.py --long-description
 after_success:
   - coveralls
+deploy:
+  on:
+    tags: true
+  provider: pypi
+  user: mapboxci
+  distributions: "sdist bdist_wheel"

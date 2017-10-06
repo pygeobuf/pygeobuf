@@ -22,10 +22,10 @@ with codecs_open('README', encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='geobuf',
-      version='1.1.0',
+      version='1.1.1',
       description=(
-        u"Geobuf is a compact binary geospatial format for lossless "
-        u"compression of GeoJSON and TopoJSON data."),
+          u"Geobuf is a compact binary geospatial format for lossless "
+          u"compression of GeoJSON and TopoJSON data."),
       long_description=long_description,
       classifiers=[],
       keywords='data gis geojson topojson protobuf',

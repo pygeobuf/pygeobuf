@@ -1,6 +1,10 @@
 Changes
 =======
 
+1.1.1 (2017-10-06)
+------------------
+- Fix integer encoding with Python 3 (#33).
+
 1.1.0 (2016-02-25)
 ------------------
 - Change coordinates to sint64 (#21).
