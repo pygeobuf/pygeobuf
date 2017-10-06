@@ -11,6 +11,7 @@ install:
     - "pip install pytest-cov"
 script:
   - python setup.py --long-description
+  - pip install -e .
   - python -m pytest --cov geobuf --cov-report term-missing
 after_success:
   - coveralls
