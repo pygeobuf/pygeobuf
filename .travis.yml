@@ -7,14 +7,11 @@ addons:
   apt:
     packages:
       - pandoc
-env:
-  - TOXENV=py27
-  - TOXENV=py35
 install:
-  - "pip install tox"
+    - "pip install pytest-cov"
 script:
-  - tox
   - python setup.py --long-description
+  - python -m pytest --cov geobuf --cov-report term-missing
 after_success:
   - coveralls
 deploy:
