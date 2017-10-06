@@ -2,6 +2,7 @@
 
 import collections
 import json
+import six
 import sys
 
 from . import geobuf_pb2
@@ -13,10 +14,31 @@ class Decoder:
                       'Polygon', 'MultiPolygon', 'GeometryCollection')
 
 
-    def decode(self, data_str):
+    def decode(self, data):
 
-        data = self.data = geobuf_pb2.Data()
-        data.ParseFromString(data_str)
+        if isinstance(data, six.binary_type):
+            data_str = data
+            data = self.data = geobuf_pb2.Data()
+            data.ParseFromString(data_str)
+        else:
+            #assert isinstance(data, geobuf_pb2.Data)
+            #
+            # I'd like to assert that the data is an instance
+            # however when geobuf.proto is included in another proto
+            # file, the resulting instances are not instances of
+            # THIS geobuf_pb2... A work around here is to check
+            # the class name which works for me.
+            #
+            # XXX Maybe this doesn't work :/
+            #
+            # might need more test cases if geobuf Data comes from
+            # a geobuf that's included in another message
+            #
+            # for now assert that name == 'Data' and if there are
+            # issues then the user can marshal the embedded Data
+            # using decode(mymessage.geobuf.SerializeToString())
+            #
+            assert data.__class__.__name__ == 'Data'
 
         self.e = pow(10, data.precision)
         self.dim = data.dimensions
