@@ -32,16 +32,16 @@ It serves as a prototyping playground, with faster implementations in JS and C++
 
 #### Sample compression sizes
 
-                    | normal    | gzipped
-------------------- | --------- | --------
-us-zips.json 	    | 101.85 MB | 26.67 MB
-us-zips.pbf         | 12.24 MB  | 10.48 MB
-us-zips.topo.json   | 15.02 MB  | 3.19 MB
-us-zips.topo.pbf    | 4.85 MB   | 2.72 MB
-idaho.json          | 10.92 MB  | 2.57 MB
-idaho.pbf           | 1.37 MB   | 1.17 MB
-idaho.topo.json     | 1.9 MB    | 612 KB
-idaho.topo.pbf      | 567 KB    | 479 KB
+|                     | normal    | gzipped
+| ------------------- | --------- | --------
+| us-zips.json 	      | 101.85 MB | 26.67 MB
+| us-zips.pbf         | 12.24 MB  | 10.48 MB
+| us-zips.topo.json   | 15.02 MB  | 3.19 MB
+| us-zips.topo.pbf    | 4.85 MB   | 2.72 MB
+| idaho.json          | 10.92 MB  | 2.57 MB
+| idaho.pbf           | 1.37 MB   | 1.17 MB
+| idaho.topo.json     | 1.9 MB    | 612 KB
+| idaho.topo.pbf      | 567 KB    | 479 KB
 
 ### Usage
 
