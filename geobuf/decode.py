@@ -2,16 +2,13 @@
 
 import collections
 import json
-import sys
 
 from . import geobuf_pb2
 
 
 class Decoder:
-
     geometry_types = ('Point', 'MultiPoint', 'LineString', 'MultiLineString',
                       'Polygon', 'MultiPolygon', 'GeometryCollection')
-
 
     def decode(self, data_str):
 
@@ -25,11 +22,14 @@ class Decoder:
 
         data_type = data.WhichOneof('data_type')
 
-        if data_type == 'feature_collection': return self.decode_feature_collection(data.feature_collection)
-        elif data_type == 'feature': return self.decode_feature(data.feature)
-        elif data_type == 'geometry': return self.decode_geometry(data.geometry)
-        elif data_type == 'topology': return self.decode_topology(data.topology)
-
+        if data_type == 'feature_collection':
+            return self.decode_feature_collection(data.feature_collection)
+        elif data_type == 'feature':
+            return self.decode_feature(data.feature)
+        elif data_type == 'geometry':
+            return self.decode_geometry(data.geometry)
+        elif data_type == 'topology':
+            return self.decode_topology(data.topology)
 
     def decode_feature_collection(self, feature_collection):
         obj = {'type': 'FeatureCollection', 'features': []}
@@ -39,7 +39,6 @@ class Decoder:
 
         return obj
 
-
     def decode_feature(self, feature):
         obj = collections.OrderedDict()
         obj['type'] = 'Feature'
@@ -48,10 +47,10 @@ class Decoder:
 
         self.decode_id(feature, obj)
         obj['geometry'] = self.decode_geometry(feature.geometry)
-        if len(feature.properties): obj['properties'] = self.decode_properties(feature.properties, feature.values)
+        if len(feature.properties):
+            obj['properties'] = self.decode_properties(feature.properties, feature.values)
 
         return obj
-
 
     def decode_topology(self, topology):
         obj = collections.OrderedDict()
@@ -77,33 +76,40 @@ class Decoder:
         i = 0
         for l in topology.lengths:
             obj['arcs'].append([self.decode_point(topology.coords[j:j + self.dim])
-                    for j in range(i, i + l * self.dim, self.dim)])
+                                for j in range(i, i + l * self.dim, self.dim)])
             i += l * self.dim
 
         return obj
 
-
     def decode_properties(self, props, values, dest=None):
-        if dest is None: dest = {}
+        if dest is None:
+            dest = {}
         for i in range(0, len(props), 2):
             key = self.data.keys[props[i]]
             val = values[props[i + 1]]
 
             value_type = val.WhichOneof('value_type')
-            if value_type == 'string_value': dest[key] = val.string_value
-            elif value_type == 'double_value': dest[key] = val.double_value
-            elif value_type == 'pos_int_value': dest[key] = val.pos_int_value
-            elif value_type == 'neg_int_value': dest[key] = -val.neg_int_value
-            elif value_type == 'bool_value': dest[key] = val.bool_value
-            elif value_type == 'json_value': dest[key] = json.loads(val.json_value)
+            if value_type == 'string_value':
+                dest[key] = val.string_value
+            elif value_type == 'double_value':
+                dest[key] = val.double_value
+            elif value_type == 'pos_int_value':
+                dest[key] = val.pos_int_value
+            elif value_type == 'neg_int_value':
+                dest[key] = -val.neg_int_value
+            elif value_type == 'bool_value':
+                dest[key] = val.bool_value
+            elif value_type == 'json_value':
+                dest[key] = json.loads(val.json_value)
         return dest
 
-
-    def decode_id(self, obj, obj_json):
+    @staticmethod
+    def decode_id(obj, obj_json):
         id_type = obj.WhichOneof('id_type')
-        if id_type == 'id': obj_json['id'] = obj.id
-        elif id_type == 'int_id': obj_json['id'] = obj.int_id
-
+        if id_type == 'id':
+            obj_json['id'] = obj.id
+        elif id_type == 'int_id':
+            obj_json['id'] = obj.int_id
 
     def decode_geometry(self, geometry):
         obj = collections.OrderedDict()
@@ -120,23 +126,18 @@ class Decoder:
 
         if gt == 'GeometryCollection':
             obj['geometries'] = [self.decode_geometry(geom) for geom in geometry.geometries]
-
         elif gt == 'Point':
             obj['coordinates'] = self.decode_point(geometry.coords)
-
         elif gt == 'MultiPoint':
             obj['coordinates'] = self.decode_line(geometry.coords, True)
-
         elif gt == 'LineString':
             obj[coords_or_arcs] = self.decode_line(geometry.coords)
-
         elif (gt == 'MultiLineString') or (gt == 'Polygon'):
             obj[coords_or_arcs] = self.decode_multi_line(geometry)
-
-        elif gt == 'MultiPolygon': obj[coords_or_arcs] = self.decode_multi_polygon(geometry)
+        elif gt == 'MultiPolygon':
+            obj[coords_or_arcs] = self.decode_multi_polygon(geometry)
 
         return obj
-
 
     def decode_coord(self, coord):
         return coord if self.transformed else float(coord) / self.e
@@ -156,14 +157,13 @@ class Decoder:
             d = self.dim
             r = range(d)
             r2 = range(0, len(coords), d)
-            p0 = [0 for i in r]
+            p0 = [0 for _ in r]
             for i in r2:
                 p = [p0[j] + coords[i + j] for j in r]
                 obj.append(self.decode_point(p))
                 p0 = p
 
         return obj
-
 
     def decode_multi_line(self, geometry):
         if len(geometry.lengths) == 0:
@@ -179,7 +179,6 @@ class Decoder:
 
         return obj
 
-
     def decode_multi_polygon(self, geometry):
         if len(geometry.lengths) == 0:
             return [[self.decode_line(geometry.coords)]]
@@ -190,7 +189,7 @@ class Decoder:
         j = 1
         d = 1 if self.is_topo else self.dim
 
-        for n in range(num_polygons): # for every polygon
+        for n in range(num_polygons):  # for every polygon
             num_rings = geometry.lengths[j]
             j += 1
             rings = []
