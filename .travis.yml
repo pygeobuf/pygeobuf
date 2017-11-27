@@ -8,10 +8,11 @@ addons:
     packages:
       - pandoc
 install:
-    - "pip install pytest-cov"
+    - "pip install flake8 pytest-cov"
 script:
   - python setup.py --long-description
   - pip install -e .
+  - flake8 geobuf
   - python -m pytest --cov geobuf --cov-report term-missing
 after_success:
   - coveralls
