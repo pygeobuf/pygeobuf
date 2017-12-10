@@ -19,6 +19,14 @@ class Encoder:
         'GeometryCollection': 6,
     }
 
+    def __init__(self):
+        self.json = None
+        self.data = None
+        self.precision = None
+        self.dim = None
+        self.e = None
+        self.keys = collections.OrderedDict()
+
     def encode(self, data_json, precision=6, dim=2):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
@@ -27,18 +35,12 @@ class Encoder:
         self.dim = dim
         self.e = pow(10, precision)  # multiplier for converting coordinates into integers
 
-        self.keys = collections.OrderedDict()
-        self.transformed = False
-        self.is_topo = False
-
         data_type = obj['type']
 
         if data_type == 'FeatureCollection':
             self.encode_feature_collection(data.feature_collection, obj)
         elif data_type == 'Feature':
             self.encode_feature(data.feature, obj)
-        elif data_type == 'Topology':
-            self.encode_topology(data.topology, obj)
         else:
             self.encode_geometry(data.geometry, obj)
 
@@ -55,52 +57,15 @@ class Encoder:
         self.encode_custom_properties(feature, feature_json, ('type', 'id', 'properties', 'geometry'))
         self.encode_geometry(feature.geometry, feature_json.get('geometry'))
 
-    def encode_topology(self, topology, data_json):
-
-        self.is_topo = True
-
-        transform_json = data_json.get('transform')
-
-        if transform_json:
-            scale_json = transform_json.get('scale')
-            translate_json = transform_json.get('translate')
-
-            transform = topology.transform
-            transform.scale_x = scale_json[0]
-            transform.scale_y = scale_json[1]
-            transform.translate_x = translate_json[0]
-            transform.translate_y = translate_json[1]
-
-            self.transformed = True
-
-        self.encode_custom_properties(topology, data_json, ('type', 'transform', 'arcs', 'objects'))
-
-        arcs = data_json.get('arcs')
-        for arc in arcs:
-            topology.lengths.append(len(arc))
-        for arc in arcs:
-            for p in arc:
-                self.add_point(topology.coords, p)
-
-        for name, geom in data_json.get('objects').items():
-            topology.names.append(name)
-            self.encode_geometry(topology.objects.add(), geom)
-
     def encode_geometry(self, geometry, geometry_json):
 
         gt = geometry_json['type']
         coords = geometry_json.get('coordinates')
-        coords_or_arcs = coords
 
         geometry.type = self.geometry_types[gt]
 
         self.encode_custom_properties(geometry, geometry_json,
                                       ('type', 'id', 'coordinates', 'arcs', 'geometries', 'properties'))
-
-        if self.is_topo:
-            coords_or_arcs = geometry_json.get('arcs')
-            self.encode_id(geometry, geometry_json.get('id'))
-            self.encode_properties(geometry, geometry_json.get('properties'))
 
         if gt == 'GeometryCollection':
             for geom in geometry_json.get('geometries'):
@@ -108,13 +73,15 @@ class Encoder:
         elif gt == 'Point':
             self.add_point(geometry.coords, coords)
         elif gt == 'MultiPoint':
-            self.add_line(geometry.coords, coords, True)
+            self.add_line(geometry.coords, coords)
         elif gt == 'LineString':
-            self.add_line(geometry.coords, coords_or_arcs)
-        elif gt == 'MultiLineString' or gt == 'Polygon':
-            self.add_multi_line(geometry, coords_or_arcs)
+            self.add_line(geometry.coords, coords)
+        elif gt == 'MultiLineString':
+            self.add_multi_line(geometry, coords)
+        elif gt == 'Polygon':
+            self.add_multi_line(geometry, coords, is_closed=True)
         elif gt == 'MultiPolygon':
-            self.add_multi_polygon(geometry, coords_or_arcs)
+            self.add_multi_polygon(geometry, coords)
 
     def encode_properties(self, obj, props_json):
         if props_json:
@@ -174,28 +141,28 @@ class Encoder:
                 obj.id = str(id)
 
     def add_coord(self, coords, coord):
-        coords.append(coord if self.transformed else int(round(coord * self.e)))
+        coords.append(int(round(coord * self.e)))
 
     def add_point(self, coords, point):
         for x in point:
             self.add_coord(coords, x)
 
-    def add_line(self, coords, points, is_multi_point=False):
-        r = range(self.dim)
-        for i, p in enumerate(points):
-            if self.is_topo and not is_multi_point:  # delta-encode arc indexes
-                coords.append(p - (points[i - 1] if i else 0))
-            else:  # delta-encode coordinates
-                for j in r:
-                    self.add_coord(coords, p[j] - (points[i - 1][j] if i else 0))
+    def add_line(self, coords, points, is_closed=False):
+        sum = [0] * self.dim
+        r = range(0, len(points) - int(is_closed))
+        for i in r:
+            for j in range(0, self.dim):
+                n = int(round(points[i][j] * self.e) - sum[j])
+                coords.append(n)
+                sum[j] += n
 
-    def add_multi_line(self, geometry, lines):
+    def add_multi_line(self, geometry, lines, is_closed=False):
         if len(lines) != 1:
             for points in lines:
-                geometry.lengths.append(len(points))
+                geometry.lengths.append(len(points) - int(is_closed))
 
         for points in lines:
-            self.add_line(geometry.coords, points)
+            self.add_line(geometry.coords, points, is_closed)
 
     def add_multi_polygon(self, geometry, polygons):
         if len(polygons) != 1 or len(polygons[0]) != 1:
@@ -203,8 +170,8 @@ class Encoder:
             for rings in polygons:
                 geometry.lengths.append(len(rings))
                 for points in rings:
-                    geometry.lengths.append(len(points))
+                    geometry.lengths.append(len(points) - 1)
 
         for rings in polygons:
             for points in rings:
-                self.add_line(geometry.coords, points)
+                self.add_line(geometry.coords, points, is_closed=True)
