@@ -45,15 +45,16 @@ It serves as a prototyping playground, with faster implementations in JS and C++
 
 ### Usage
 
+Installation:
+
+`pip install geobuf`
+
 Command line:
 
 ```bash
 geobuf encode < example.json > example.pbf
 geobuf decode < example.pbf > example.pbf.json
 ```
-Installation:
-
-`pip install geobuf`
 
 As a module:
 
