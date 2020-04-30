@@ -51,6 +51,9 @@ Command line:
 geobuf encode < example.json > example.pbf
 geobuf decode < example.pbf > example.pbf.json
 ```
+Installation:
+
+`pip install geobuf`
 
 As a module:
 
