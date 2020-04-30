@@ -45,6 +45,10 @@ It serves as a prototyping playground, with faster implementations in JS and C++
 
 ### Usage
 
+Installation:
+
+`pip install geobuf`
+
 Command line:
 
 ```bash
