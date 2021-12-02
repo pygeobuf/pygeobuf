@@ -30,6 +30,7 @@ class Encoder:
     def encode(self, data_json, precision=6, dim=2):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
+        data.dimensions = dim
 
         self.precision = precision
         self.dim = dim
