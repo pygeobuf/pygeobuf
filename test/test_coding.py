@@ -79,3 +79,35 @@ def test_circle_accumulating_error():
     ring_orig = [round_coord(coord) for coord in feature['coordinates'][0][0]]
     ring_round_tripped = [round_coord(coord) for coord in round_tripped['coordinates'][0][0]]
     assert ring_round_tripped == ring_orig
+
+
+def test_dimensions():
+    """
+    Generate a line of 8 points. Each point is a coordinate with an altitude.
+    Ensure dim parameter allows to encode and decode a geometry.
+
+    Using dim=2 will reduce the coordinates by removing the altitude.
+    Using dim=3 must conserve the altitude
+    """
+    feature = {
+        'type': 'MultiPolygon',
+        'coordinates': [[[]]],
+    }
+    points = 8
+    # Z coordinates[0, 1, 2, 3, ... , 8, 0]
+    feature['coordinates'][0][0] = [[0, 0, i] for i in range(0, points + 1)]
+    feature['coordinates'][0][0].append([0, 0, 0])
+
+    pbf = Encoder().encode(feature, dim=2)
+    dim2 = Decoder().decode(pbf)
+
+    dim2_orig = [[x, y] for x, y, z in feature['coordinates'][0][0]]
+    dim2 = dim2['coordinates'][0][0]
+    assert dim2 == dim2_orig
+
+    pbf = Encoder().encode(feature, dim=3)
+    dim3 = Decoder().decode(pbf)
+
+    dim_orig = feature['coordinates'][0][0]
+    dim3 = dim3['coordinates'][0][0]
+    assert dim3 == dim_orig
