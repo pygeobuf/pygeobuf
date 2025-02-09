@@ -1,32 +1,13 @@
-from codecs import open as codecs_open
-import distutils.log
-import os.path
-import shutil
 from setuptools import setup, find_packages
-import subprocess
-
-
-# Try to convert README markdown to restructured text using pandoc.
-try:
-    subprocess.call(
-        'pandoc --from=markdown --to=rst --output=README README.md',
-        shell=True)
-    assert os.path.exists('README')
-except:
-    distutils.log.warn(
-        "Conversion of README.md to restructured text was not successful.")
-    shutil.copy('README.md', 'README')
-
-# Get the long description from the relevant file
-with codecs_open('README', encoding='utf-8') as f:
-    long_description = f.read()
+from pathlib import Path
 
 setup(name='geobuf',
       version='2.0.0',
       description=(
           u"Geobuf is a compact binary geospatial format for lossless "
           u"compression of GeoJSON."),
-      long_description=long_description,
+      long_description=Path('README.md').read_text(),
+      long_description_content_type='text/markdown',
       classifiers=[],
       keywords='data gis geojson protobuf',
       author=u"Vladimir Agafonkin",
