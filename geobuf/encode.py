@@ -108,7 +108,7 @@ class Encoder:
         value = values.add()
 
         if isinstance(val, dict) or isinstance(val, list):
-            value.json_value = json.dumps(val, separators=(',', ':'))
+            value.json_value = json.dumps(val, separators=(',', ':')).encode('utf-8')
         elif isinstance(val, six.text_type):
             value.string_value = val
         elif isinstance(val, float):
