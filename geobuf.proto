@@ -1,66 +1,76 @@
-option optimize_for = LITE_RUNTIME;
+// Taken from https://github.com/mscno/go-geobuf/blob/master/geobufpb/geobuf.proto
+// Does not match the mapbox/geobuf schema exactly, since it also supports EMPTY geometry types
+syntax = "proto3";
 
+// Data is a protobuf schema for encoding GeoJSON-like data in a more compact binary format.
+// It's a super type for one of FeatureCollection, Feature, or Geometry.
 message Data {
-    repeated string keys = 1; // global arrays of unique keys
+  repeated string keys = 1; // global arrays of unique keys
 
-    optional uint32 dimensions = 2 [default = 2]; // max coordinate dimensions
-    optional uint32 precision = 3 [default = 6]; // number of digits after decimal point for coordinates
+  uint32 dimensions = 2; // max coordinate dimensions, default 2
+  uint32 precision = 3; // number of digits after decimal point for coordinates, default 6
 
-    oneof data_type {
-        FeatureCollection feature_collection = 4;
-        Feature feature = 5;
-        Geometry geometry = 6;
+  oneof data_type {
+    FeatureCollection feature_collection = 4;
+    Feature feature = 5;
+    Geometry geometry = 6;
+  }
+
+  // A feature object
+  message Feature {
+    Geometry geometry = 1;
+
+    oneof id_type {
+      string id = 11;
+      sint64 int_id = 12;
     }
 
-    message Feature {
-        required Geometry geometry = 1;
+    repeated Value values = 13; // unique values
+    repeated uint32 properties = 14; // pairs of key/value indexes
+    repeated uint32 custom_properties = 15; // arbitrary properties
+  }
 
-        oneof id_type {
-            string id = 11;
-            sint64 int_id = 12;
-        }
+  // A geometry object
+  message Geometry {
+    Type type = 1;
 
-        repeated Value values = 13; // unique values
-        repeated uint32 properties = 14 [packed = true]; // pairs of key/value indexes
-        repeated uint32 custom_properties = 15 [packed = true]; // arbitrary properties
+    repeated uint32 lengths = 2; // coordinate structure in lengths
+    repeated sint64 coords = 3; // delta-encoded integer values
+    repeated Geometry geometries = 4;
+
+    repeated Value values = 13;
+    repeated uint32 custom_properties = 15;
+
+    // Type of geometry
+    enum Type {
+      TYPE_EMPTY = 0;  // protolint:disable:this ENUM_FIELD_NAMES_ZERO_VALUE_END_WITH
+      TYPE_POINT = 1;
+      TYPE_MULTIPOINT = 2;
+      TYPE_LINESTRING = 3;
+      TYPE_MULTILINESTRING = 4;
+      TYPE_POLYGON = 5;
+      TYPE_MULTIPOLYGON = 6;
+      TYPE_GEOMETRYCOLLECTION = 7;
     }
+  }
 
-    message Geometry {
-        required Type type = 1;
+  // A collection of features
+  message FeatureCollection {
+    repeated Feature features = 1;
 
-        repeated uint32 lengths = 2 [packed = true]; // coordinate structure in lengths
-        repeated sint64 coords = 3 [packed = true]; // delta-encoded integer values
-        repeated Geometry geometries = 4;
+    repeated Value values = 13;
+    repeated uint32 custom_properties = 15;
+  }
 
-        repeated Value values = 13;
-        repeated uint32 custom_properties = 15 [packed = true];
-
-        enum Type {
-            POINT = 0;
-            MULTIPOINT = 1;
-            LINESTRING = 2;
-            MULTILINESTRING = 3;
-            POLYGON = 4;
-            MULTIPOLYGON = 5;
-            GEOMETRYCOLLECTION = 6;
-        }
+  // The value of a key
+  message Value {
+    oneof value_type {
+      string string_value = 1;
+      double double_value = 2;
+      uint64 pos_int_value = 3;
+      uint64 neg_int_value = 4;
+      bool bool_value = 5;
+      bytes json_value = 6;
     }
-
-    message FeatureCollection {
-        repeated Feature features = 1;
-
-        repeated Value values = 13;
-        repeated uint32 custom_properties = 15 [packed = true];
-    }
-
-    message Value {
-        oneof value_type {
-            string string_value = 1;
-            double double_value = 2;
-            uint64 pos_int_value = 3;
-            uint64 neg_int_value = 4;
-            bool bool_value = 5;
-            string json_value = 6;
-        }
-    }
+  }
 }

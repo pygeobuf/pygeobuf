@@ -80,3 +80,12 @@ py.test -v
 
 The tests run through all `.json` files in the `fixtures` directory,
 comparing each original GeoJSON with an encoded/decoded one.
+
+### Generating from geobuf.proto
+
+To (re-)generate the `geobuf_pb2.py` file, you can run the following
+commands:
+
+```bash
+protoc geobuf.proto --python_out=geobuf
+```
