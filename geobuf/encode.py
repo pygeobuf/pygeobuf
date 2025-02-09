@@ -93,13 +93,13 @@ class Encoder:
 
     def encode_custom_properties(self, obj, obj_json, exclude):
         for key, val in obj_json.items():
-            if not (key in exclude):
+            if key not in exclude:
                 self.encode_property(key, val, obj.custom_properties, obj.values)
 
     def encode_property(self, key, val, properties, values):
         keys = self.keys
 
-        if not (key in keys):
+        if key not in keys:
             keys[key] = True
             self.data.keys.append(key)
             key_index = len(self.data.keys) - 1
