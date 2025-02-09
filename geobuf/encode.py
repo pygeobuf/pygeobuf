@@ -3,6 +3,7 @@
 import collections
 import json
 
+from typing import Mapping
 import six
 
 from . import geobuf_pb2
@@ -20,14 +21,14 @@ class Encoder:
     }
 
     def __init__(self):
-        self.json = None
-        self.data = None
-        self.precision = None
-        self.dim = None
-        self.e = None
+        self.json: Mapping = dict()
+        self.data: geobuf_pb2.Data = geobuf_pb2.Data()
+        self.precision: int = 6
+        self.dim: int = 2
+        self.e: int = pow(10, self.precision)
         self.keys = collections.OrderedDict()
 
-    def encode(self, data_json, precision=6, dim=2):
+    def encode(self, data_json: Mapping, precision: int = 6, dim: int = 2):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
         data.dimensions = dim
