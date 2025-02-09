@@ -32,11 +32,14 @@ def test_cli_decode_err():
 
 
 def test_cli_roundtrip(props_json):
+    """ tests the roundtrip of encoding and decoding geobuf using the cli, essentially:
+        $ geobuf encode < props.json | geobuf decode
+    """
     runner = CliRunner()
-    result = runner.invoke(cli, ['encode'], props_json)
+    result = runner.invoke(cli, ['encode'], input=props_json)
     assert result.exit_code == 0
-    pbf = result.output_bytes
-    result = runner.invoke(cli, ['decode'], pbf)
+    pbf = result.stdout_bytes
+    result = runner.invoke(cli, ['decode'], input=pbf)
     assert result.exit_code == 0
     assert "@context" in result.output
     assert result.output.count("Feature") == 6

@@ -11,11 +11,11 @@ class Decoder:
                       'Polygon', 'MultiPolygon', 'GeometryCollection')
 
     def __init__(self):
-        self.data = None
-        self.e = None
-        self.dim = None
+        self.data: geobuf_pb2.Data = geobuf_pb2.Data()
+        self.e: int = 1
+        self.dim: int = 2
 
-    def decode(self, data_str):
+    def decode(self, data_str: bytes):
 
         data = self.data = geobuf_pb2.Data()
         data.ParseFromString(data_str)
