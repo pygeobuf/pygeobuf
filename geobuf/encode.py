@@ -3,6 +3,7 @@
 import collections
 import json
 
+from typing import Mapping
 import six
 
 from . import geobuf_pb2
@@ -20,17 +21,18 @@ class Encoder:
     }
 
     def __init__(self):
-        self.json = None
-        self.data = None
-        self.precision = None
-        self.dim = None
-        self.e = None
+        self.json: Mapping = dict()
+        self.data: geobuf_pb2.Data = geobuf_pb2.Data()
+        self.precision: int = 6
+        self.dim: int = 2
+        self.e: int = pow(10, self.precision)
         self.keys = collections.OrderedDict()
 
-    def encode(self, data_json, precision=6, dim=2):
+    def encode(self, data_json: Mapping, precision: int = 6, dim: int = 2):
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
         data.dimensions = dim
+        data.precision = precision
 
         self.precision = precision
         self.dim = dim
@@ -91,13 +93,13 @@ class Encoder:
 
     def encode_custom_properties(self, obj, obj_json, exclude):
         for key, val in obj_json.items():
-            if not (key in exclude):
+            if key not in exclude:
                 self.encode_property(key, val, obj.custom_properties, obj.values)
 
     def encode_property(self, key, val, properties, values):
         keys = self.keys
 
-        if not (key in keys):
+        if key not in keys:
             keys[key] = True
             self.data.keys.append(key)
             key_index = len(self.data.keys) - 1
@@ -107,7 +109,7 @@ class Encoder:
         value = values.add()
 
         if isinstance(val, dict) or isinstance(val, list):
-            value.json_value = json.dumps(val, separators=(',', ':'))
+            value.json_value = json.dumps(val, separators=(',', ':')).encode('utf-8')
         elif isinstance(val, six.text_type):
             value.string_value = val
         elif isinstance(val, float):
