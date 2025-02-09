@@ -1,25 +1,22 @@
 ## Geobuf
 
-Geobuf is a compact binary geospatial format for _lossless_ compression of GeoJSON and TopoJSON data.
-
-[![Build Status](https://travis-ci.org/pygeobuf/pygeobuf.svg?branch=master)](https://travis-ci.org/pygeobuf/pygeobuf)
-[![Coverage Status](https://coveralls.io/repos/pygeobuf/pygeobuf/badge.svg?branch=master)](https://coveralls.io/r/pygeobuf/pygeobuf?branch=master)
+Geobuf is a compact binary geospatial format for _lossless_ compression of GeoJSON.
 
 **Note well**: this project has been transferred by Mapbox to the new pygeobuf organization.
 
-Advantages over using GeoJSON and TopoJSON directly (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
+Advantages over using GeoJSON directly (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
 
-- **Very compact**: typically makes GeoJSON 6-8 times smaller and TopoJSON 2-3 times smaller.
-- Smaller even when comparing gzipped sizes: 2-2.5x compression for GeoJSON and 20-30% for TopoJSON.
+- **Very compact**: typically makes GeoJSON 6-8 times smaller.
+- Smaller even when comparing gzipped sizes: 2-2.5x compression for GeoJSON.
 - Easy **incremental parsing** &mdash; you can get features out as you read them,
 without the need to build in-memory representation of the whole data.
 - **Partial reads** &mdash; you can read only the parts you actually need, skipping the rest.
 - Trivial **concatenation**: you can concatenate many Geobuf files together and they will form a valid combined Geobuf file.
 - Potentially **faster encoding/decoding** compared to native JSON implementations (i.e. in Web browsers).
-- Can still accommodate any GeoJSON and TopoJSON data, including extensions with arbitrary properties.
+- Can still accommodate any GeoJSON, including extensions with arbitrary properties.
 
 Think of this as an attempt to design a simple, modern Shapefile successor
-that works seamlessly with GeoJSON and TopoJSON.
+that works seamlessly with GeoJSON.
 
 Unlike [Mapbox Vector Tiles](https://github.com/mapbox/vector-tile-spec/), it aims for _lossless_ compression
 of datasets &mdash; without tiling, projecting coordinates, flattening geometries or stripping properties.
@@ -61,8 +58,8 @@ As a module:
 ```python
 import geobuf
 
-pbf = geobuf.encode(my_json) # GeoJSON or TopoJSON -> Geobuf string
-my_json = geobuf.decode(pbf) # Geobuf string -> GeoJSON or TopoJSON
+pbf = geobuf.encode(my_json) # GeoJSON -> Geobuf string
+my_json = geobuf.decode(pbf) # Geobuf string -> GeoJSON
 ```
 
 The `encode` function accepts a dict-like object, for example the result of `json.loads(json_str)`.

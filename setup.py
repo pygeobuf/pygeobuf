@@ -25,10 +25,10 @@ setup(name='geobuf',
       version='2.0.0',
       description=(
           u"Geobuf is a compact binary geospatial format for lossless "
-          u"compression of GeoJSON and TopoJSON data."),
+          u"compression of GeoJSON."),
       long_description=long_description,
       classifiers=[],
-      keywords='data gis geojson topojson protobuf',
+      keywords='data gis geojson protobuf',
       author=u"Vladimir Agafonkin",
       author_email='vladimir@mapbox.com',
       url='https://github.com/mapbox/pygeobuf',
