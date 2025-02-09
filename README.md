@@ -2,9 +2,6 @@
 
 Geobuf is a compact binary geospatial format for _lossless_ compression of GeoJSON.
 
-[![Build Status](https://travis-ci.org/pygeobuf/pygeobuf.svg?branch=master)](https://travis-ci.org/pygeobuf/pygeobuf)
-[![Coverage Status](https://coveralls.io/repos/pygeobuf/pygeobuf/badge.svg?branch=master)](https://coveralls.io/r/pygeobuf/pygeobuf?branch=master)
-
 **Note well**: this project has been transferred by Mapbox to the new pygeobuf organization.
 
 Advantages over using GeoJSON directly (in this [revised version](https://github.com/mapbox/geobuf/issues/27)):
