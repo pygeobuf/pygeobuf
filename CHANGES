@@ -4,6 +4,8 @@ Changes
 2.0.0 (TBD)
 ------------------
 - Matches the functionality provided by mapbox/geobuf v3.0.0
+- Improved support for decoding coordinates with 3 dimensions
+- Updated the protobuf definition to support the latest versions of protobuf
 - **Breaking**: removed TopoJSON support
 - **Breaking**: changed encoding to not include the closing point of a polygon ring
 
