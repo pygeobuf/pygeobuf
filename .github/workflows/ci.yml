@@ -1,0 +1,10 @@
+name: Placeholder Workflow for CI
+
+on: [push, pull_request]
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Do nothing
+        run: echo "This is a placeholder step that does nothing."
