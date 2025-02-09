@@ -31,6 +31,7 @@ class Encoder:
         obj = self.json = data_json
         data = self.data = geobuf_pb2.Data()
         data.dimensions = dim
+        data.precision = precision
 
         self.precision = precision
         self.dim = dim
