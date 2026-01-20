@@ -1,7 +1,7 @@
 from .encode import Encoder
 from .decode import Decoder
 
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 
 
 def encode(*args):

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 setup(name='geobuf',
-      version='2.0.0',
+      version='2.0.1',
       description=(
           u"Geobuf is a compact binary geospatial format for lossless "
           u"compression of GeoJSON."),

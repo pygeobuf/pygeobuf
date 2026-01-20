@@ -1,10 +1,12 @@
+import base64
 import glob
 import json
-import os
 import math
+import os
 
 import pytest
 
+import geobuf
 from geobuf import Decoder, Encoder
 
 exclude = {'precision.json'}
@@ -111,3 +113,23 @@ def test_dimensions():
     dim_orig = feature['coordinates'][0][0]
     dim3 = dim3['coordinates'][0][0]
     assert dim3 == dim_orig
+
+
+def test_decode_js_encoded_dim_zero():
+    """
+    Test decoding data where dimensions field is unset (JS encoder behavior).
+
+    The JS geobuf encoder omits the dimensions field when dim=2 (optimization).
+    Proto3 returns 0 for unset uint32 fields. The Python decoder must handle
+    this by defaulting to 2, matching the JS decoder behavior.
+
+    See: https://github.com/pygeobuf/pygeobuf/issues/59
+    """
+    # This data was encoded by the JS library (via PostGIS ST_AsGeobuf)
+    # with dimensions field omitted (unset, proto3 returns 0)
+    data = base64.b64decode('GAAiEAoOCgwIBBoIAAAAAgIAAAE=')
+    result = geobuf.decode(data)
+
+    assert result['type'] == 'FeatureCollection'
+    assert len(result['features']) == 1
+    assert result['features'][0]['geometry']['type'] == 'Polygon'
