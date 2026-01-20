@@ -21,7 +21,7 @@ class Decoder:
         data.ParseFromString(data_str)
 
         self.e = pow(10, data.precision)
-        self.dim = data.dimensions
+        self.dim = data.dimensions or 2
 
         data_type = data.WhichOneof('data_type')
 

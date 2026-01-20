@@ -1,6 +1,10 @@
 Changes
 =======
 
+2.0.1 (2026-01-20)
+------------------
+- Fix decoding of geobuf data encoded by the JS library where dimensions field is unset (#59)
+
 2.0.0 (2025-02-09)
 ------------------
 - Matches the functionality provided by mapbox/geobuf v3 (#35)
